@@ -2,7 +2,6 @@ import React, { forwardRef, useState } from "react";
 import { TextInput, View, Text, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { InputProps } from "@/types/ui";
-import { toPersianNumber, toEnglishNumber } from "@/utils/persianNumber";
 
 const Input = forwardRef<TextInput, InputProps>(
   (
@@ -46,20 +45,19 @@ const Input = forwardRef<TextInput, InputProps>(
         keyboardType === "phone-pad"
       ) {
         const numbersOnly = text.replace(/[^0-9۰-۹]/g, "");
-        const englishText = toEnglishNumber(numbersOnly);
+        // const englishText = toEnglishNumber(numbersOnly);
+        const englishText = numbersOnly;
         onChangeText?.(englishText);
       } else {
         onChangeText?.(text);
       }
     };
 
-    const displayValue =
+    const displayValue: any =
       (keyboardType === "numeric" ||
         keyboardType === "number-pad" ||
         keyboardType === "phone-pad") &&
-      value
-        ? toPersianNumber(value.toString())
-        : value;
+      value;
 
     const isInputActive = isFocused || (value && value.toString().length > 0);
 

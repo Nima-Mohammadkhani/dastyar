@@ -7,16 +7,11 @@ import {
   BottomSheetBackdrop,
 } from "@gorhom/bottom-sheet";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-
-interface CustomBottomSheetProps {
-  children?: React.ReactNode;
-  visible?: boolean;
-  onClose?: () => void;
-}
+import { IbottomSheetProps } from "@/types/ui";
 
 export type CustomBottomSheetRef = BottomSheetModal;
 
-const CustomBottomSheet = forwardRef<BottomSheetModal, CustomBottomSheetProps>(
+const CustomBottomSheet = forwardRef<BottomSheetModal, IbottomSheetProps>(
   (props, ref) => {
     const insets = useSafeAreaInsets();
     const internalRef = useRef<BottomSheetModal>(null);
