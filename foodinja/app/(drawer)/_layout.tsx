@@ -7,7 +7,7 @@ const DrawerLayout = () => {
       screenOptions={{
         headerShown: true,
       }}
-      drawerContent={(props) => <CustomDrawerContent {...props} />}
+      drawerContent={() => <CustomDrawerContent />}
     >
       <Drawer.Screen name="index" options={{ title: "New Chat" }} />
       <Drawer.Screen name="account" options={{ title: "Account" }} />
