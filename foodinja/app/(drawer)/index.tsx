@@ -9,12 +9,9 @@ import {
   Keyboard,
   Pressable,
   ImageBackground,
-  Platform,
   Image,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { BlurView } from "expo-blur";
-import { TextInput } from "react-native-gesture-handler";
 const Index = () => {
   const { backgroundImage, colors } = useTheme();
   const [promt, setPromt] = useState("");
