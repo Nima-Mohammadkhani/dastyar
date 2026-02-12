@@ -23,7 +23,7 @@ export const Colors = {
       950: "#294F36",
     },
     neutral: {
-      50: "#FFFFFF",
+      50: "#000000",
       100: "#F9F9F9",
       200: "#EDEDED",
       250: "#EBEBE3",
@@ -126,8 +126,8 @@ export const Fonts = Platform.select({
 });
 
 export const BackgroundImages = {
-  light: require("../assets/lightBackground.png"),
-  dark: require("../assets/darkBackground.png"),
+  light: require("../assets/images/app/lightBackground.png"),
+  dark: require("../assets/images/app/darkBackground.png"),
 };
 
 export function useTheme() {

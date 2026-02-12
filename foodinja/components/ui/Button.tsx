@@ -24,7 +24,6 @@ const Button = ({
   title,
   onPress,
   variant = "primary",
-  size = "md",
   className = "",
   textClassName = "",
   style,
@@ -84,7 +83,7 @@ const Button = ({
   };
 
   const buttonClasses =
-    `${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ` +
+    `${baseClasses} ${variantClasses[variant]} ` +
     (disabled ? "bg-gray-400 border-gray-300 " : "") +
     className;
 
