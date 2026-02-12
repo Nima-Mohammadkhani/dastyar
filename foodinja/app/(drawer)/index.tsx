@@ -221,7 +221,7 @@ const Index = () => {
             from={{ opacity: 0, translateY: 30 }}
             animate={{ opacity: 1, translateY: 0 }}
             transition={{ type: "timing", duration: 600, delay: 300 }}
-            className="relative"
+            className="relative mb-4"
             style={{ bottom: keyboardHeight }}
           >
             <Input
@@ -229,7 +229,7 @@ const Index = () => {
               onChangeText={setPrompt}
               placeholder="پیامتو بنویس..."
               placeholderTextColor={colors.primary[900]}
-              containerClassName="p-2 text-base rounded-2xl bg-white/50"
+              containerClassName="p-1 text-base rounded-2xl bg-white/50"
               containerStyle={{
                 borderWidth: 4,
                 borderColor: colors.primary[900],
@@ -242,7 +242,7 @@ const Index = () => {
               onSubmitEditing={handleSendMessage}
             />
             <Button
-              className="absolute w-12 h-12 top-2.5 start-2 px-2 rounded-full"
+              className="absolute w-12 h-12 top-1.5 start-2 px-2 rounded-full"
               style={{
                 backgroundColor: isLoading
                   ? colors.neutral[400]

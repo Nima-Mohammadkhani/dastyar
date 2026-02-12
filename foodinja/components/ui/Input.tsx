@@ -83,7 +83,7 @@ const Input = forwardRef<TextInput, InputProps>(
 
     return (
       <View
-        className={`w-full mb-4 font-vazir ${containerClassName}`}
+        className={`w-full font-vazir ${containerClassName}`}
         style={containerStyle}
       >
         {label && (
