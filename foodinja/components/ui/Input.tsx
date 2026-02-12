@@ -1,7 +1,31 @@
 import React, { forwardRef, useState } from "react";
-import { TextInput, View, Text, Pressable } from "react-native";
+import {
+  TextInput,
+  View,
+  Text,
+  Pressable,
+  StyleProp,
+  ViewStyle,
+  TextStyle,
+  TextInputProps,
+} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { InputProps } from "@/types/ui";
+
+interface InputProps extends TextInputProps {
+  label?: string;
+  error?: string;
+  leftIcon?: string;
+  rightIcon?: string;
+  secureToggle?: boolean;
+  unit?: string;
+  containerClassName?: string;
+  inputClassName?: string;
+  textClassName?: string;
+  containerStyle?: StyleProp<ViewStyle>;
+  inputStyle?: StyleProp<TextStyle>;
+  labelStyle?: StyleProp<TextStyle>;
+  errorStyle?: StyleProp<TextStyle>;
+}
 
 const Input = forwardRef<TextInput, InputProps>(
   (
@@ -14,7 +38,11 @@ const Input = forwardRef<TextInput, InputProps>(
       secureToggle = false,
       containerClassName = "",
       inputClassName = "",
-      textClassName,
+      textClassName = "",
+      containerStyle,
+      inputStyle,
+      labelStyle,
+      errorStyle,
       onFocus,
       onBlur,
       onChangeText,
@@ -45,32 +73,33 @@ const Input = forwardRef<TextInput, InputProps>(
         keyboardType === "phone-pad"
       ) {
         const numbersOnly = text.replace(/[^0-9۰-۹]/g, "");
-        // const englishText = toEnglishNumber(numbersOnly);
-        const englishText = numbersOnly;
-        onChangeText?.(englishText);
+        onChangeText?.(numbersOnly);
       } else {
         onChangeText?.(text);
       }
     };
 
-    const displayValue: any =
-      (keyboardType === "numeric" ||
-        keyboardType === "number-pad" ||
-        keyboardType === "phone-pad") &&
-      value;
-
     const isInputActive = isFocused || (value && value.toString().length > 0);
 
     return (
-      <View className={`w-full mb-4 ${containerClassName}`}>
+      <View
+        className={`w-full mb-4 font-vazir ${containerClassName}`}
+        style={containerStyle}
+      >
         {label && (
-          <Text className={`mb-1 font-dana ${textClassName}`}>{label}</Text>
+          <Text className={textClassName} style={labelStyle}>
+            {label}
+          </Text>
         )}
 
         <View
-          className={`relative flex-row items-center border rounded-lg bg-white ${
-            isFocused ? "border-hit" : "border-beerus"
-          } ${error ? "border-red-500" : ""}`}
+          className={`relative flex-row items-center rounded px-2 ${
+            error
+              ? "border-red-500"
+              : isFocused
+                ? "border-blue-500"
+                : "border-gray-300"
+          }`}
         >
           {leftIcon && (
             <Ionicons
@@ -82,16 +111,20 @@ const Input = forwardRef<TextInput, InputProps>(
           )}
 
           <TextInput
-            className={`flex-1 py-2 font-dana ${inputClassName} ${
-              unit && isInputActive ? "pr-20" : ""
-            } ${unit && !isInputActive ? "pl-20" : ""}`}
+            className={inputClassName}
+            style={[
+              { flex: 1, paddingVertical: 8, paddingHorizontal: 4},
+              unit && isInputActive ? { paddingRight: 40 } : {},
+              unit && !isInputActive ? { paddingLeft: 40 } : {},
+              inputStyle,
+            ]}
             placeholderTextColor="#8C9197"
             secureTextEntry={hidePassword}
             onFocus={handleFocus}
             onBlur={handleBlur}
             onChangeText={handleChangeText}
             ref={ref}
-            value={displayValue}
+            value={value}
             keyboardType={keyboardType || "default"}
             selectionColor={"black"}
             {...props}
@@ -99,9 +132,11 @@ const Input = forwardRef<TextInput, InputProps>(
 
           {unit && (
             <Text
-              className={`absolute font-dana-medium text-[#8C9197] ${
-                isInputActive ? "end-3" : "start-3"
-              }`}
+              className="absolute text-gray-400"
+              style={{
+                right: isInputActive ? 12 : undefined,
+                left: !isInputActive ? 12 : undefined,
+              }}
             >
               {unit}
             </Text>
@@ -113,6 +148,7 @@ const Input = forwardRef<TextInput, InputProps>(
                 name={hidePassword ? "eye-off" : "eye"}
                 size={20}
                 color="#9CA3AF"
+                style={{ marginLeft: 8 }}
               />
             </Pressable>
           )}
@@ -122,16 +158,21 @@ const Input = forwardRef<TextInput, InputProps>(
               name={rightIcon}
               size={20}
               color={isFocused ? "#2563EB" : "#9CA3AF"}
+              style={{ marginLeft: 8 }}
             />
           )}
         </View>
 
         {error && (
-          <Text className="mt-1 text-red-500 text-sm font-dana">{error}</Text>
+          <Text className="mt-1 text-red-500 text-sm" style={errorStyle}>
+            {error}
+          </Text>
         )}
       </View>
     );
   },
 );
+
 Input.displayName = "Input";
+
 export default Input;
