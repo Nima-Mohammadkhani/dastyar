@@ -3,28 +3,42 @@ import {
   Pressable,
   Text,
   ActivityIndicator,
-  View,
-  Platform,
   Animated,
   Easing,
+  StyleProp,
+  ViewStyle,
+  TextStyle,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { ButtonProps } from "@/types/ui";
 
+interface EnhancedButtonProps extends ButtonProps {
+  style?: StyleProp<ViewStyle>;
+  textStyle?: StyleProp<TextStyle>;
+  iconClassName?: string;
+  iconRotate?: number;
+  iconCenter?: boolean;
+}
+
 const Button = ({
   title,
   onPress,
-  variant = "",
-  size = "",
+  variant = "primary",
+  size = "md",
   className = "",
   textClassName = "",
+  style,
+  textStyle,
   disabled = false,
   loading = false,
   iconLeft,
   iconRight,
   iconSize = 20,
+  iconClassName = "",
+  iconRotate = 0,
+  iconCenter = false,
   rippleColor,
-}: ButtonProps) => {
+}: EnhancedButtonProps) => {
   const [opacity] = useState(new Animated.Value(1));
 
   const baseClasses =
@@ -52,25 +66,21 @@ const Button = ({
   const iconColor = variant === "outline" ? "#007AFF" : "#fff";
 
   const handlePressIn = () => {
-    if (Platform.OS === "ios") {
-      Animated.timing(opacity, {
-        toValue: 0.7,
-        duration: 100,
-        useNativeDriver: true,
-        easing: Easing.out(Easing.ease),
-      }).start();
-    }
+    Animated.timing(opacity, {
+      toValue: 0.7,
+      duration: 100,
+      useNativeDriver: true,
+      easing: Easing.out(Easing.ease),
+    }).start();
   };
 
   const handlePressOut = () => {
-    if (Platform.OS === "ios") {
-      Animated.timing(opacity, {
-        toValue: 1,
-        duration: 100,
-        useNativeDriver: true,
-        easing: Easing.out(Easing.ease),
-      }).start();
-    }
+    Animated.timing(opacity, {
+      toValue: 1,
+      duration: 100,
+      useNativeDriver: true,
+      easing: Easing.out(Easing.ease),
+    }).start();
   };
 
   const buttonClasses =
@@ -98,8 +108,21 @@ const Button = ({
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
       className={buttonClasses}
+      style={style}
     >
-      <Animated.View style={{ opacity }} className="flex-row items-center">
+      <Animated.View
+        style={{
+          opacity,
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: iconCenter
+            ? "center"
+            : title
+              ? "flex-start"
+              : "center",
+          flex: iconCenter ? 1 : undefined,
+        }}
+      >
         {loading ? (
           <ActivityIndicator
             color={variant === "outline" ? "#007AFF" : "#fff"}
@@ -107,21 +130,33 @@ const Button = ({
           />
         ) : (
           <>
-            {iconLeft && (
+            {iconLeft && !iconCenter && (
               <Ionicons
                 name={iconLeft}
                 size={iconSize}
                 color={iconColor}
-                style={{ marginRight: title ? 6 : 0 }}
+                className={iconClassName}
+                style={{
+                  marginRight: title ? 6 : 0,
+                  transform: [{ rotate: `${iconRotate}deg` }],
+                }}
               />
             )}
-            {title && <Text className={textClasses}>{title}</Text>}
+            {title && (
+              <Text className={textClasses} style={textStyle}>
+                {title}
+              </Text>
+            )}
             {iconRight && (
               <Ionicons
                 name={iconRight}
                 size={iconSize}
                 color={iconColor}
-                style={{ marginLeft: title ? 6 : 0 }}
+                className={iconClassName}
+                style={{
+                  marginLeft: title && !iconCenter ? 6 : 0,
+                  transform: [{ rotate: `${iconRotate}deg` }],
+                }}
               />
             )}
           </>
@@ -130,4 +165,5 @@ const Button = ({
     </Pressable>
   );
 };
+
 export default Button;
