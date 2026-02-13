@@ -13,6 +13,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { MotiView, MotiImage } from "moti";
+import DrawerButton from "@/components/ui/DrawerButton";
 
 const MOCK_RESPONSES = [
   "سلام! چه خوشحالم که می‌خوای یه غذای خوشمزه بپزی. برای شروع، چه نوع غذایی دوست داری؟ ایرانی، فرنگی یا شاید یه دسر؟",
@@ -124,6 +125,7 @@ const Index = () => {
         style={{ flex: 1, backgroundColor: "transparent" }}
         className="px-4"
       >
+        <DrawerButton />
         <View style={{ flex: 1 }}>
           {showWelcomeScreen ? (
             <Pressable className="flex-1" onPress={Keyboard.dismiss}>
