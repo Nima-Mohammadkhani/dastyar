@@ -1,13 +1,18 @@
 import React, { forwardRef, useEffect, useRef, useState } from "react";
-import { View, Text, Keyboard, KeyboardEvent, Platform } from "react-native";
+import {
+  Keyboard,
+  KeyboardEvent,
+  Platform,
+  useColorScheme,
+} from "react-native";
 import {
   BottomSheetModal,
   BottomSheetView,
-  BottomSheetTextInput,
   BottomSheetBackdrop,
 } from "@gorhom/bottom-sheet";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { IbottomSheetProps } from "@/types/ui";
+import { useTheme } from "@/constants/theme";
 
 export type CustomBottomSheetRef = BottomSheetModal;
 
@@ -18,7 +23,8 @@ const CustomBottomSheet = forwardRef<BottomSheetModal, IbottomSheetProps>(
     const sheetRef = (ref || internalRef) as React.RefObject<BottomSheetModal>;
 
     const [keyboardHeight, setKeyboardHeight] = useState(0);
-
+    const { colors } = useTheme();
+    const scheme = useColorScheme();
     useEffect(() => {
       const showEvent =
         Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
@@ -67,7 +73,10 @@ const CustomBottomSheet = forwardRef<BottomSheetModal, IbottomSheetProps>(
         enableDynamicSizing
         backdropComponent={renderBackdrop}
         handleIndicatorStyle={{ backgroundColor: "#ccc", width: 50 }}
-        backgroundStyle={{ backgroundColor: "white", borderRadius: 24 }}
+        backgroundStyle={{
+          borderRadius: 24,
+          backgroundColor: scheme == "dark" ? "#1C1C1E" : "#ffffff",
+        }}
         enableHandlePanningGesture={true}
         enableContentPanningGesture={false}
         keyboardBehavior="interactive"
@@ -76,48 +85,13 @@ const CustomBottomSheet = forwardRef<BottomSheetModal, IbottomSheetProps>(
       >
         <BottomSheetView
           style={{
+            backgroundColor: scheme == "dark" ? "#1C1C1E" : "#ffffff",
             paddingBottom: keyboardHeight
               ? keyboardHeight + 25 + insets.bottom
               : insets.bottom,
           }}
         >
-          {props.children || (
-            <>
-              <View className="mb-4 items-center">
-                <Text className="text-lg font-bold text-gray-800">
-                  عنوان باتم شیت
-                </Text>
-                <Text className="text-sm text-gray-500 mt-1">
-                  کیبورد کاملاً داینامیک
-                </Text>
-              </View>
-
-              <View className="mb-4">
-                <Text className="text-gray-600 mb-2">
-                  هیچ محتوایی زیر کیبورد قرار نمی‌گیرد
-                </Text>
-                <View className="h-20 bg-gray-100 rounded-lg w-full mb-2" />
-              </View>
-
-              {/* Input */}
-              <View className="mb-2">
-                <Text className="text-sm font-medium mb-1 text-gray-700">
-                  تست ورودی:
-                </Text>
-                <BottomSheetTextInput
-                  placeholder="اینجا تایپ کن..."
-                  className="w-full bg-gray-50 border border-gray-200 rounded-xl p-4 text-right"
-                  style={{ fontSize: 16 }}
-                />
-              </View>
-
-              <View className="mt-4">
-                <Text className="text-center text-xs text-gray-400">
-                  همیشه 25px فاصله از بالای کیبورد
-                </Text>
-              </View>
-            </>
-          )}
+          {props.children}
         </BottomSheetView>
       </BottomSheetModal>
     );

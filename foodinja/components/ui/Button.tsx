@@ -55,7 +55,7 @@ const Button = ({
     lg: "px-6 py-4",
   };
 
-  const textBase = "font-semibold";
+  const textBase = "font-semibold font-vazir";
   const textVariant: Record<string, string> = {
     primary: "text-white",
     secondary: "text-white",
