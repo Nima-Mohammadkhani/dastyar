@@ -1,22 +1,66 @@
 import { Stack } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
+import { Pressable, useColorScheme } from "react-native";
+import { useRouter } from "expo-router";
 
-const settingLayout = () => {
+const SettingsLayout = () => {
+  const router = useRouter();
+  const scheme = useColorScheme();
   return (
     <Stack
       screenOptions={{
-        headerShown: false,
+        headerTitleAlign: "center",
         animation: "none",
         presentation: "card",
-        gestureEnabled: false,
+        gestureEnabled: true,
       }}
     >
-      <Stack.Screen name="index" />
-      <Stack.Screen name="about" />
-      <Stack.Screen name="dataContorol" />
-      <Stack.Screen name="general" />
-      <Stack.Screen name="personalization" />
-      <Stack.Screen name="upgrade" />
+      <Stack.Screen
+        name="index"
+        options={{
+          title: "تنظیمات",
+          headerTitleStyle: { fontFamily: "VazirMedium" },
+          headerLeft: () => (
+            <Pressable onPress={() => router.back()}>
+              <Ionicons
+                name="arrow-back"
+                size={24}
+                color={scheme == "dark" ? "white" : "black"}
+              />
+            </Pressable>
+          ),
+        }}
+      />
+
+      <Stack.Screen
+        name="about"
+        options={{
+          title: "درباره ما",
+          headerTitleStyle: { fontFamily: "VazirMedium" },
+          headerLeft: () => (
+            <Pressable onPress={() => router.back()}>
+              <Ionicons
+                name="arrow-back"
+                size={24}
+                color={scheme == "dark" ? "white" : "black"}
+              />
+            </Pressable>
+          ),
+        }}
+      />
+
+      <Stack.Screen name="dataContorol" options={{ title: "Data Control" }} />
+
+      <Stack.Screen name="general" options={{ title: "General" }} />
+
+      <Stack.Screen
+        name="personalization"
+        options={{ title: "Personalization" }}
+      />
+
+      <Stack.Screen name="upgrade" options={{ title: "Upgrade" }} />
     </Stack>
   );
 };
-export default settingLayout;
+
+export default SettingsLayout;

@@ -5,7 +5,7 @@ const DrawerLayout = () => {
   return (
     <Drawer
       screenOptions={{
-        headerShown: true,
+        headerShown: false,
       }}
       drawerContent={() => <CustomDrawerContent />}
     >
