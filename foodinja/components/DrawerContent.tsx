@@ -1,5 +1,5 @@
 import { useDrawerStatus } from "@react-navigation/drawer";
-import { View, Text, ScrollView } from "react-native";
+import { View, Text, ScrollView, Pressable } from "react-native";
 import Input from "./ui/Input";
 import { useState, useEffect } from "react";
 import { useTheme } from "@/constants/theme";
@@ -7,6 +7,7 @@ import Button from "./ui/Button";
 import { Ionicons } from "@expo/vector-icons";
 import { MotiView } from "moti";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useRouter } from "expo-router";
 
 const CustomDrawerContent = () => {
   const [search, setSearch] = useState<string>("");
@@ -14,7 +15,7 @@ const CustomDrawerContent = () => {
   const drawerStatus = useDrawerStatus();
   const isDrawerOpen = drawerStatus === "open";
   const [animateKey, setAnimateKey] = useState(0);
-
+  const router = useRouter();
   useEffect(() => {
     if (isDrawerOpen) {
       setAnimateKey((prev) => prev + 1);
@@ -81,10 +82,14 @@ const CustomDrawerContent = () => {
               style={{ backgroundColor: colors.primary[900] }}
               iconRight="add"
               iconCenter
+              onPress={() => router.push("/(drawer)")}
             />
           </View>
 
-          <View className="flex flex-row items-center gap-2">
+          <Pressable
+            onPress={() => router.push("/(drawer)")}
+            className="flex flex-row items-center gap-2"
+          >
             <Button
               className="w-12 h-12 rounded-full"
               style={{ backgroundColor: colors.primary[900] }}
@@ -94,7 +99,7 @@ const CustomDrawerContent = () => {
             <Text className="font-vazir" style={{ color: colors.neutral[50] }}>
               چت جدید
             </Text>
-          </View>
+          </Pressable>
         </View>
       </MotiView>
 
@@ -124,7 +129,10 @@ const CustomDrawerContent = () => {
         animate={{ opacity: 1, translateY: 0 }}
         transition={{ type: "timing", duration: 350, delay: 200 }}
       >
-        <View className="flex flex-row items-center gap-2 mt-2">
+        <Pressable
+          onPress={() => router.push("/(drawer)/setting")}
+          className="flex flex-row items-center gap-2 mt-2"
+        >
           <View className="flex justify-center items-center rounded-full bg-purple-500 p-2 w-12 h-12">
             <Text className="font-vazir" style={{ color: colors.neutral[50] }}>
               Ni
@@ -139,7 +147,7 @@ const CustomDrawerContent = () => {
             </Text>
             <Ionicons name="chevron-down" />
           </View>
-        </View>
+        </Pressable>
       </MotiView>
     </SafeAreaView>
   );
