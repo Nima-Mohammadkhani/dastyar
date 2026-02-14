@@ -35,7 +35,7 @@ const Index = () => {
     ],
   };
 
-  const cardBg = scheme === "dark" ? "#1C1C1E" : "#ffffff";
+  const cardBg = scheme === "dark" ? "#1C1C1E" : "#F5F5F5";
 
   const SettingRow = ({ item, index }: any) => (
     <MotiView
@@ -63,7 +63,10 @@ const Index = () => {
   );
 
   return (
-    <SafeAreaView className="flex-1">
+    <SafeAreaView
+      className="flex-1"
+      style={{ backgroundColor: scheme == "dark" ? "#000000" : "white" }}
+    >
       <MotiView
         from={{ opacity: 0 }}
         animate={{ opacity: 1 }}
