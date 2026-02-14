@@ -56,16 +56,9 @@ const Index = () => {
         )}
       </View>
 
-      <View className="flex-row items-center gap-4">
-        <Text className="font-vazir" style={{ color: colors.neutral[50] }}>
-          {item.title}
-        </Text>
-        <Ionicons
-          name="settings-outline"
-          size={18}
-          color={colors.neutral[50]}
-        />
-      </View>
+      <Text className="font-vazir" style={{ color: colors.neutral[50] }}>
+        {item.title}
+      </Text>
     </MotiView>
   );
 
@@ -119,10 +112,10 @@ const Index = () => {
             />
           </MotiView>
 
-          <View className="mt-8 gap-3">
+          <View className="mt-8 gap-3 relative">
             <Text
               className="font-vazir text-sm"
-              style={{ color: colors.neutral[500] }}
+              style={{ color: colors.neutral[500], direction: "rtl" }}
             >
               فود اینجا من
             </Text>
@@ -140,7 +133,7 @@ const Index = () => {
           <View className="mt-8 gap-3">
             <Text
               className="font-vazir text-sm"
-              style={{ color: colors.neutral[500] }}
+              style={{ color: colors.neutral[500], direction: "rtl" }}
             >
               تنظیمات
             </Text>

@@ -145,7 +145,7 @@ const CustomDrawerContent = () => {
             >
               Nima
             </Text>
-            <Ionicons name="chevron-down" />
+            <Ionicons name="chevron-down" color={colors.neutral[50]} />
           </View>
         </Pressable>
       </MotiView>
