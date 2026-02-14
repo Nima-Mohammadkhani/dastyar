@@ -13,19 +13,24 @@ import { useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import Input from "@/components/ui/Input";
 import { MotiView } from "moti";
+import { useRouter } from "expo-router";
 
 const Index = () => {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const scheme = useColorScheme();
   const [editSheet, setEditSheet] = useState<boolean>(false);
   const [name, setName] = useState<string>("Nima");
   const [userName, setUserName] = useState<string>("NimaMohammadkhani");
-
+  const router = useRouter();
   const settingFeature = {
     myModel: [{ id: 1, title: "شخصی سازی" }],
     feature: [
       { id: 1, title: "فضای کاری", value: "شخصی" },
-      { id: 2, title: "ارتقا به سطح بالاتر" },
+      {
+        id: 2,
+        title: "ارتقا به سطح بالاتر",
+        action: () => router.push("/(drawer)/setting/upgrade"),
+      },
       { id: 3, title: "ایمیل", value: "nimamohammadkhani" },
       { id: 4, title: "تم رنگی", value: "دستگاه" },
       { id: 5, title: "رنگ", value: "پیش فرض" },
@@ -44,21 +49,26 @@ const Index = () => {
       transition={{ delay: index * 60 }}
       className="p-4 flex-row justify-between items-center"
     >
-      <View className="flex-row items-center gap-2">
-        <Ionicons name="chevron-back" size={16} color={colors.neutral[500]} />
-        {item.value && (
-          <Text
-            className="font-vazir text-sm"
-            style={{ color: colors.neutral[500] }}
-          >
-            {item.value}
-          </Text>
-        )}
-      </View>
+      <Pressable
+        className="flex-row justify-between items-center w-full"
+        onPress={item.action}
+      >
+        <View className="flex-row items-center gap-2">
+          <Ionicons name="chevron-back" size={16} color={colors.neutral[500]} />
+          {item.value && (
+            <Text
+              className="font-vazir text-sm"
+              style={{ color: colors.neutral[500] }}
+            >
+              {item.value}
+            </Text>
+          )}
+        </View>
 
-      <Text className="font-vazir" style={{ color: colors.neutral[50] }}>
-        {item.title}
-      </Text>
+        <Text className="font-vazir" style={{ color: colors.neutral[50] }}>
+          {item.title}
+        </Text>
+      </Pressable>
     </MotiView>
   );
 
@@ -152,7 +162,11 @@ const Index = () => {
                   {index !== settingFeature.feature.length - 1 && (
                     <View
                       className="w-full h-px"
-                      style={{ backgroundColor: colors.neutral[200] }}
+                      style={{
+                        backgroundColor: isDark
+                          ? colors.neutral[800]
+                          : colors.neutral[200],
+                      }}
                     />
                   )}
                 </View>

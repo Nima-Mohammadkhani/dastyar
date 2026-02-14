@@ -58,7 +58,22 @@ const SettingsLayout = () => {
         options={{ title: "Personalization" }}
       />
 
-      <Stack.Screen name="upgrade" options={{ title: "Upgrade" }} />
+      <Stack.Screen
+        name="upgrade"
+        options={{
+          title: "ارتقا",
+          headerTitleStyle: { fontFamily: "VazirMedium" },
+          headerLeft: () => (
+            <Pressable onPress={() => router.back()}>
+              <Ionicons
+                name="arrow-back"
+                size={24}
+                color={scheme == "dark" ? "white" : "black"}
+              />
+            </Pressable>
+          ),
+        }}
+      />
     </Stack>
   );
 };
