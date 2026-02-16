@@ -81,7 +81,12 @@ const Index = () => {
         action: () => setLanguageSheet(true),
       },
       { id: 7, title: "کنترل داده ها", icon: true },
-      { id: 8, title: "درباره ما", icon: true },
+      {
+        id: 8,
+        title: "درباره ما",
+        icon: true,
+        action: () => router.push("/(drawer)/setting/about"),
+      },
     ],
   };
 
