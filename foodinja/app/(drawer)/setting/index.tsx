@@ -1,583 +1,544 @@
-import { SafeAreaView } from "react-native-safe-area-context";
-import { View, Text, ScrollView, Pressable, Switch } from "react-native";
-import { useState, useRef, useEffect } from "react";
-import { MotiView } from "moti";
-import { Ionicons } from "@expo/vector-icons";
-import { useTheme } from "@/constants/theme";
-import BottomSheet from "@/components/ui/BottomSheet";
 import Button from "@/components/ui/Button";
+import { useTheme } from "@/constants/theme";
+import {
+  ScrollView,
+  Text,
+  useColorScheme,
+  View,
+  Pressable,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import BottomSheet from "@/components/ui/BottomSheet";
+import { useState } from "react";
+import { Ionicons } from "@expo/vector-icons";
+import Input from "@/components/ui/Input";
+import { MotiView } from "moti";
+import { useRouter } from "expo-router";
 
-const DataControl = () => {
+const Index = () => {
   const { colors, isDark } = useTheme();
-  const [modelImprovement, setModelImprovement] = useState(false);
+  const scheme = useColorScheme();
+  const [editSheet, setEditSheet] = useState<boolean>(false);
+  const [themeSheet, setThemeSheet] = useState<boolean>(false);
+  const [languageSheet, setLanguageSheet] = useState<boolean>(false);
+  const [name, setName] = useState<string>("Nima");
+  const [userName, setUserName] = useState<string>("NimaMohammadkhani");
+  const [selectedTheme, setSelectedTheme] = useState<string>("system");
+  const [selectedLanguage, setSelectedLanguage] = useState<string>("fa");
+  const router = useRouter();
 
-  const [hasAnimated, setHasAnimated] = useState(false);
-  const [exportSheet, setExportSheet] = useState(false);
-  const [deleteAccountSheet, setDeleteAccountSheet] = useState(false);
-  const [clearHistorySheet, setClearHistorySheet] = useState(false);
-  const [archiveSheet, setArchiveSheet] = useState(false);
+  const changeTheme = (theme: string) => {
+    setSelectedTheme(theme);
+    console.log("Theme changed to:", theme);
+  };
 
-  const exportSheetRef = useRef(false);
-  const deleteSheetRef = useRef(false);
-  const clearSheetRef = useRef(false);
-  const archiveSheetRef = useRef(false);
+  const changeLanguage = (lang: string) => {
+    setSelectedLanguage(lang);
+    console.log("Language changed to:", lang);
+  };
 
-  useEffect(() => {
-    setHasAnimated(true);
-  }, []);
+  const getThemeDisplayValue = () => {
+    switch (selectedTheme) {
+      case "light":
+        return "روشن";
+      case "dark":
+        return "تاریک";
+      case "system":
+        return "همراه با دستگاه";
+      default:
+        return "همراه با دستگاه";
+    }
+  };
 
-  const cardBg = isDark ? "#1C1C1E" : "#F5F5F5";
-  const borderColor = isDark ? colors.neutral[800] : colors.neutral[200];
+  const getLanguageDisplayValue = () => {
+    return selectedLanguage === "fa" ? "فارسی" : "English";
+  };
 
-  const DataBox = ({ children, className = "" }: any) => (
+  const settingFeature = {
+    myModel: [{ id: 1, title: "شخصی سازی", icon: true }],
+    feature: [
+      { id: 1, title: "فضای کاری", value: "شخصی" },
+      {
+        id: 2,
+        title: "ارتقا به سطح بالاتر",
+        action: () => router.push("/(drawer)/setting/upgrade"),
+        icon: true,
+      },
+      { id: 3, title: "ایمیل", value: "nimamohammadkhani" },
+      {
+        id: 4,
+        title: "تم رنگی",
+        value: getThemeDisplayValue(),
+        icon: true,
+        action: () => setThemeSheet(true),
+      },
+      { id: 5, title: "رنگ", value: "پیش فرض" },
+      {
+        id: 6,
+        title: "عمومی",
+        value: getLanguageDisplayValue(),
+        icon: true,
+        action: () => setLanguageSheet(true),
+      },
+      {
+        id: 7,
+        title: "کنترل داده ها",
+        icon: true,
+        action: () => router.push("/(drawer)/setting/dataContorol"),
+      },
+      {
+        id: 8,
+        title: "درباره ما",
+        icon: true,
+        action: () => router.push("/(drawer)/setting/about"),
+      },
+    ],
+  };
+
+  const cardBg = scheme === "dark" ? "#1C1C1E" : "#F5F5F5";
+
+  const SettingRow = ({ item, index }: any) => (
     <MotiView
-      from={hasAnimated ? undefined : { opacity: 0, translateY: 20 }}
+      from={{ opacity: 0, translateY: 10 }}
       animate={{ opacity: 1, translateY: 0 }}
-      transition={{ type: "spring", delay: 200 }}
-      className={`rounded-md overflow-hidden mb-4 ${className}`}
-      style={{
-        backgroundColor: cardBg,
-        borderWidth: 1,
-        borderColor: borderColor,
-      }}
+      transition={{ delay: index * 60 }}
+      className="p-4"
     >
-      {children}
+      <Pressable
+        className="flex-row justify-between items-center w-full"
+        onPress={item.action}
+      >
+        <View className="flex-row items-center gap-2">
+          {item.icon && (
+            <Ionicons
+              name="chevron-back"
+              size={16}
+              color={colors.neutral[500]}
+            />
+          )}
+          {item.value && (
+            <Text
+              className="font-vazir text-sm"
+              style={{ color: colors.neutral[500] }}
+            >
+              {item.value}
+            </Text>
+          )}
+        </View>
+
+        <Text className="font-vazir" style={{ color: colors.neutral[50] }}>
+          {item.title}
+        </Text>
+      </Pressable>
     </MotiView>
   );
 
-  const BoxHeader = ({ title, icon, rightComponent }: any) => (
-    <View
-      className="flex-row-reverse justify-between items-center px-4"
+  const ThemeOption = ({ theme, label, icon, currentTheme }: any) => (
+    <Pressable
+      onPress={() => changeTheme(theme)}
+      className="flex-row-reverse items-center justify-between p-4 rounded-lg mb-2"
       style={{
-        backgroundColor: isDark ? colors.neutral[800] : colors.primary[900],
-        borderBottomWidth: 1,
-        borderBottomColor: borderColor,
+        backgroundColor: currentTheme === theme ? colors.primary[50] : cardBg,
+        borderWidth: 1,
+        borderColor:
+          currentTheme === theme ? colors.primary[500] : "transparent",
       }}
     >
-      <Text className="font-vazir text-white">{title}</Text>
-      {rightComponent}
-    </View>
-  );
-
-  const DataRow = ({ children, onPress, showBorder = true }: any) => (
-    <Pressable onPress={onPress}>
-      <View className="relative">
-        <View className="p-4">{children}</View>
-        {showBorder && (
-          <View
-            className="w-full h-px absolute bottom-0 left-0 right-0"
-            style={{ backgroundColor: borderColor }}
-          />
-        )}
+      <View className="flex-row items-center gap-3">
+        <Text
+          className="font-vazir text-base"
+          style={{
+            color:
+              currentTheme === theme ? colors.primary[900] : colors.neutral[50],
+          }}
+        >
+          {label}
+        </Text>
       </View>
+
+      {currentTheme === theme && (
+        <MotiView
+          from={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ type: "spring" }}
+        >
+          <Ionicons
+            name="checkmark-circle"
+            size={24}
+            color={colors.primary[500]}
+          />
+        </MotiView>
+      )}
     </Pressable>
   );
 
-  const ExportBottomSheet = () => {
-    const [isVisible, setIsVisible] = useState(false);
-
-    useEffect(() => {
-      if (exportSheet && !exportSheetRef.current) {
-        exportSheetRef.current = true;
-        setIsVisible(true);
-      } else if (!exportSheet) {
-        exportSheetRef.current = false;
-        setIsVisible(false);
-      }
-    }, [exportSheet]);
-
-    if (!isVisible) return null;
-
-    return (
-      <BottomSheet visible={exportSheet} onClose={() => setExportSheet(false)}>
-        <View className="p-6">
-          <View className="items-center mb-6">
-            <View
-              className="w-16 h-16 rounded-full justify-center items-center mb-4"
-              style={{ backgroundColor: colors.primary[900] + "20" }}
-            >
-              <Ionicons
-                name="download-outline"
-                size={32}
-                color={colors.primary[500]}
-              />
-            </View>
-            <Text
-              className="font-vazir text-lg mb-2"
-              style={{ color: colors.neutral[50] }}
-            >
-              خروجی گرفتن از داده‌ها
-            </Text>
-            <Text
-              className="font-vazir text-sm text-center"
-              style={{ color: colors.neutral[400], lineHeight: 22 }}
-            >
-              جزییات حساب و مکالمات شما نیز شامل خواهد شد. داده‌ها در یک فایل
-              قابل دانلود به ایمیل ثبت شده ارسال میشوند. لینک دانلود ۲۴ ساعت پس
-              از دریافت منقضی میشود. پردازش ممکن است مدتی طول بکشد. وقتی آماده
-              شد به شما اطلاع میدهیم.
-            </Text>
-          </View>
-
-          <View className="flex-row gap-3 mt-4">
-            <Button
-              title="خروجی گرفتن از داده"
-              style={{
-                backgroundColor: colors.primary[900],
-                borderRadius: 8,
-                flex: 1,
-              }}
-              textStyle={{
-                color: "white",
-                fontSize: 14,
-                fontFamily: "vazir",
-              }}
-              className="py-3"
-              onPress={() => {
-                setExportSheet(false);
-              }}
-            />
-            <Button
-              title="لغو"
-              style={{
-                backgroundColor: colors.neutral[50],
-                borderRadius: 8,
-                flex: 1,
-              }}
-              textStyle={{
-                color: isDark ? "black" : "white",
-                fontSize: 14,
-                fontFamily: "vazir",
-              }}
-              className="py-3"
-              onPress={() => setExportSheet(false)}
-            />
-          </View>
-        </View>
-      </BottomSheet>
-    );
-  };
-
-  const DeleteAccountBottomSheet = () => {
-    const [isVisible, setIsVisible] = useState(false);
-
-    useEffect(() => {
-      if (deleteAccountSheet && !deleteSheetRef.current) {
-        deleteSheetRef.current = true;
-        setIsVisible(true);
-      } else if (!deleteAccountSheet) {
-        deleteSheetRef.current = false;
-        setIsVisible(false);
-      }
-    }, [deleteAccountSheet]);
-
-    if (!isVisible) return null;
-
-    return (
-      <BottomSheet
-        visible={deleteAccountSheet}
-        onClose={() => setDeleteAccountSheet(false)}
+  const LanguageOption = ({ lang, label, currentLang }: any) => (
+    <Pressable
+      onPress={() => changeLanguage(lang)}
+      className="flex-row-reverse items-center justify-between p-4 rounded-lg mb-2"
+      style={{
+        backgroundColor: currentLang === lang ? colors.primary[50] : cardBg,
+        borderWidth: 1,
+        borderColor: currentLang === lang ? colors.primary[500] : "transparent",
+      }}
+    >
+      <Text
+        className="font-vazir text-base"
+        style={{
+          color:
+            currentLang === lang ? colors.primary[900] : colors.neutral[50],
+        }}
       >
-        <View className="p-6">
-          <View className="items-center mb-6">
-            <View
-              className="w-16 h-16 rounded-full justify-center items-center mb-4"
-              style={{ backgroundColor: colors.error.DEFAULT + "20" }}
-            >
-              <Ionicons
-                name="warning-outline"
-                size={32}
-                color={colors.error.DEFAULT}
-              />
-            </View>
-            <Text
-              className="font-vazir text-lg mb-2"
-              style={{ color: colors.neutral[50] }}
-            >
-              حذف حساب کاربری
-            </Text>
-            <Text
-              className="font-vazir text-sm text-center"
-              style={{ color: colors.neutral[400], lineHeight: 22 }}
-            >
-              آیا از حذف حساب کاربری خود مطمئن هستید؟ این عمل غیرقابل بازگشت
-              بوده و تمام داده‌های شما پاک خواهد شد.
-            </Text>
-          </View>
+        {label}
+      </Text>
 
-          <View className="flex-row gap-3 mt-4">
-            <Button
-              title="حذف اکانت"
-              style={{
-                backgroundColor: colors.error.DEFAULT,
-                borderRadius: 8,
-                flex: 1,
-              }}
-              textStyle={{
-                color: "white",
-                fontSize: 14,
-                fontFamily: "vazir",
-              }}
-              className="py-3"
-              onPress={() => {
-                setDeleteAccountSheet(false);
-              }}
-            />
-            <Button
-              title="لغو"
-              style={{
-                backgroundColor: colors.neutral[50],
-                borderRadius: 8,
-                flex: 1,
-              }}
-              textStyle={{
-                color: isDark ? "black" : "white",
-                fontSize: 14,
-                fontFamily: "vazir",
-              }}
-              className="py-3"
-              onPress={() => setDeleteAccountSheet(false)}
-            />
-          </View>
-        </View>
-      </BottomSheet>
-    );
-  };
-
-  const ClearHistoryBottomSheet = () => {
-    const [isVisible, setIsVisible] = useState(false);
-
-    useEffect(() => {
-      if (clearHistorySheet && !clearSheetRef.current) {
-        clearSheetRef.current = true;
-        setIsVisible(true);
-      } else if (!clearHistorySheet) {
-        clearSheetRef.current = false;
-        setIsVisible(false);
-      }
-    }, [clearHistorySheet]);
-
-    if (!isVisible) return null;
-
-    return (
-      <BottomSheet
-        visible={clearHistorySheet}
-        onClose={() => setClearHistorySheet(false)}
-      >
-        <View className="p-6">
-          <View className="items-center mb-6">
-            <View
-              className="w-16 h-16 rounded-full justify-center items-center mb-4"
-              style={{ backgroundColor: colors.error.DEFAULT + "20" }}
-            >
-              <Ionicons
-                name="trash-outline"
-                size={32}
-                color={colors.error.DEFAULT}
-              />
-            </View>
-            <Text
-              className="font-vazir text-lg mb-2"
-              style={{ color: colors.neutral[50] }}
-            >
-              پاک کردن تاریخچه چت
-            </Text>
-            <Text
-              className="font-vazir text-sm text-center"
-              style={{ color: colors.neutral[400], lineHeight: 22 }}
-            >
-              آیا از پاک کردن تمام تاریخچه چت خود مطمئن هستید؟ این عمل غیرقابل
-              بازگشت است.
-            </Text>
-          </View>
-
-          <View className="flex-row gap-3 mt-4">
-            <Button
-              title="پاک کردن"
-              style={{
-                backgroundColor: colors.error.DEFAULT,
-                borderRadius: 8,
-                flex: 1,
-              }}
-              textStyle={{
-                color: "white",
-                fontSize: 14,
-                fontFamily: "vazir",
-              }}
-              className="py-3"
-              onPress={() => {
-                setClearHistorySheet(false);
-              }}
-            />
-            <Button
-              title="لغو"
-              style={{
-                backgroundColor: colors.neutral[50],
-                borderRadius: 8,
-                flex: 1,
-              }}
-              textStyle={{
-                color: isDark ? "black" : "white",
-                fontSize: 14,
-                fontFamily: "vazir",
-              }}
-              className="py-3"
-              onPress={() => setClearHistorySheet(false)}
-            />
-          </View>
-        </View>
-      </BottomSheet>
-    );
-  };
-
-  const ArchiveBottomSheet = () => {
-    const [isVisible, setIsVisible] = useState(false);
-
-    useEffect(() => {
-      if (archiveSheet && !archiveSheetRef.current) {
-        archiveSheetRef.current = true;
-        setIsVisible(true);
-      } else if (!archiveSheet) {
-        archiveSheetRef.current = false;
-        setIsVisible(false);
-      }
-    }, [archiveSheet]);
-
-    if (!isVisible) return null;
-
-    return (
-      <BottomSheet
-        visible={archiveSheet}
-        onClose={() => setArchiveSheet(false)}
-      >
-        <View className="p-6">
-          <View className="items-center mb-6">
-            <View
-              className="w-16 h-16 rounded-full justify-center items-center mb-4"
-              style={{ backgroundColor: colors.primary[900] + "20" }}
-            >
-              <Ionicons
-                name="archive-outline"
-                size={32}
-                color={colors.primary[500]}
-              />
-            </View>
-            <Text
-              className="font-vazir text-lg mb-2"
-              style={{ color: colors.neutral[50] }}
-            >
-              آرشیو چت‌ها
-            </Text>
-            <Text
-              className="font-vazir text-sm text-center mb-4"
-              style={{ color: colors.neutral[400], lineHeight: 22 }}
-            >
-              این بخش در حال توسعه است. به زودی می‌توانید چت‌های خود را آرشیو
-              کنید.
-            </Text>
-          </View>
-
-          <View className="items-center">
-            <Button
-              title="باشه"
-              style={{
-                backgroundColor: colors.primary[900],
-                borderRadius: 8,
-                paddingHorizontal: 32,
-              }}
-              textStyle={{
-                color: "white",
-                fontSize: 14,
-                fontFamily: "vazir",
-              }}
-              className="py-3"
-              onPress={() => setArchiveSheet(false)}
-            />
-          </View>
-        </View>
-      </BottomSheet>
-    );
-  };
+      {currentLang === lang && (
+        <MotiView
+          from={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ type: "spring" }}
+        >
+          <Ionicons
+            name="checkmark-circle"
+            size={24}
+            color={colors.primary[500]}
+          />
+        </MotiView>
+      )}
+    </Pressable>
+  );
 
   return (
     <SafeAreaView
       className="flex-1"
-      style={{ backgroundColor: colors.background }}
+      style={{ backgroundColor: scheme == "dark" ? "#000000" : "white" }}
     >
-      <ScrollView className="flex-1 px-4" showsVerticalScrollIndicator={false}>
-        <MotiView
-          from={hasAnimated ? undefined : { opacity: 0, translateY: -20 }}
-          animate={{ opacity: 1, translateY: 0 }}
-          transition={{ type: "spring", delay: 100 }}
-          className="items-center mt-4 mb-2"
+      <MotiView
+        from={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 500 }}
+        className="flex-1"
+      >
+        <ScrollView
+          className="flex-1 px-4"
+          showsVerticalScrollIndicator={false}
         >
-          <Text
-            className="font-vazir text-3xl"
-            style={{ color: colors.neutral[50] }}
+          <MotiView
+            from={{ opacity: 0, translateY: -10 }}
+            animate={{ opacity: 1, translateY: 0 }}
+            transition={{ delay: 100 }}
+            className="items-center gap-2"
           >
-            کنترل <Text style={{ color: colors.primary[900] }}>داده‌ها</Text>
-          </Text>
-          <Text
-            className="font-vazir text-sm mt-2 text-center"
-            style={{ color: colors.neutral[400] }}
-          >
-            مدیریت داده‌ها و حریم خصوصی شما
-          </Text>
-        </MotiView>
-
-        <View className="mt-4">
-          <Text
-            className="font-vazir text-lg mb-3"
-            style={{ color: colors.neutral[50], textAlign: "right" }}
-          >
-            داده‌ها
-          </Text>
-
-          <DataBox>
-            <BoxHeader
-              title="بهبود مدل برای همه"
-              icon="stats-chart-outline"
-              rightComponent={
-                <Switch
-                  value={modelImprovement}
-                  onValueChange={setModelImprovement}
-                  trackColor={{
-                    false: isDark ? colors.neutral[700] : borderColor,
-                    true: colors.primary[500],
-                  }}
-                  thumbColor={
-                    modelImprovement
-                      ? "white"
-                      : isDark
-                        ? colors.neutral[50]
-                        : "white"
-                  }
-                  ios_backgroundColor={
-                    isDark ? colors.neutral[700] : borderColor
-                  }
-                />
-              }
-            />
-            <View className="p-4" style={{ direction: "rtl" }}>
+            <View className="rounded-full bg-purple-500 w-20 h-20 justify-center items-center">
               <Text
-                className="font-vazir text-xs"
-                style={{ color: colors.neutral[400], lineHeight: 20 }}
+                className="font-vazir"
+                style={{ color: colors.neutral[50], fontSize: 24 }}
               >
-                اجازه دهید از محتوای شما برای بهبود مدل استفاده شود. ما اقداماتی
-                را برای محافظت از حریم خصوصی شما انجام میدهیم.
+                Ni
               </Text>
             </View>
-          </DataBox>
 
-          <DataBox>
-            <DataRow onPress={() => setExportSheet(true)}>
-              <View className="flex-row-reverse justify-between items-center">
-                <Text
-                  className="font-vazir text-base"
-                  style={{ color: colors.neutral[50] }}
-                >
-                  خروجی گرفتن از داده‌ها
-                </Text>
-                <Ionicons
-                  name="chevron-back"
-                  size={20}
-                  color={colors.neutral[400]}
-                />
-              </View>
-            </DataRow>
-          </DataBox>
+            <View className="items-center">
+              <Text
+                className="font-vazir"
+                style={{ color: colors.neutral[50] }}
+              >
+                {name}
+              </Text>
+              <Text
+                className="font-vazir"
+                style={{ color: colors.neutral[50] }}
+              >
+                {userName}
+              </Text>
+            </View>
 
-          <DataBox>
-            <DataRow
-              onPress={() => setDeleteAccountSheet(true)}
-              showBorder={false}
+            <Button
+              title="ویرایش پروفایل"
+              className="px-3 py-1"
+              onPress={() => setEditSheet(true)}
+              style={{ backgroundColor: colors.primary[900] }}
+            />
+          </MotiView>
+
+          <View className="mt-8 gap-3 relative">
+            <Text
+              className="font-vazir text-sm"
+              style={{ color: colors.neutral[500], textAlign: "right" }}
             >
-              <View className="flex-row-reverse justify-between items-center">
-                <Text
-                  className="font-vazir text-base"
-                  style={{ color: colors.error.DEFAULT }}
-                >
-                  پاک کردن اکانت فوداینجا
-                </Text>
+              فود اینجا من
+            </Text>
+
+            <View
+              className="rounded-md overflow-hidden gap-2"
+              style={{ backgroundColor: cardBg }}
+            >
+              {settingFeature.myModel.map((item, index) => (
+                <SettingRow key={item.id} item={item} index={index} />
+              ))}
+            </View>
+          </View>
+
+          <View className="mt-8 gap-3">
+            <Text
+              className="font-vazir text-sm"
+              style={{ color: colors.neutral[500], textAlign: "right" }}
+            >
+              تنظیمات
+            </Text>
+
+            <View
+              className="rounded-md overflow-hidden"
+              style={{ backgroundColor: cardBg }}
+            >
+              {settingFeature.feature.map((item, index) => (
+                <View key={item.id}>
+                  <SettingRow item={item} index={index} />
+
+                  {index !== settingFeature.feature.length - 1 && (
+                    <View
+                      className="w-full h-px"
+                      style={{
+                        backgroundColor: isDark
+                          ? colors.neutral[800]
+                          : colors.neutral[200],
+                      }}
+                    />
+                  )}
+                </View>
+              ))}
+            </View>
+
+            <MotiView
+              from={{ opacity: 0, translateY: 10 }}
+              animate={{ opacity: 1, translateY: 0 }}
+              transition={{ delay: settingFeature.feature.length * 60 }}
+            >
+              <Pressable
+                android_ripple={{ color: "#ddd" }}
+                onPress={() => console.log("Logout")}
+                className="p-4 flex-row justify-between items-center"
+                style={({ pressed }) => [
+                  {
+                    opacity: pressed ? 0.6 : 1,
+                  },
+                ]}
+              >
                 <Ionicons
                   name="chevron-back"
-                  size={20}
-                  color={colors.neutral[400]}
+                  size={16}
+                  color={colors.error.DEFAULT}
                 />
-              </View>
-            </DataRow>
-          </DataBox>
-        </View>
 
-        <View className="mt-6">
-          <Text
-            className="font-vazir text-lg mb-3"
-            style={{ color: colors.neutral[50], textAlign: "right" }}
+                <View className="flex-row items-center gap-2">
+                  <Text
+                    className="font-vazir"
+                    style={{ color: colors.error.DEFAULT }}
+                  >
+                    خروج از حساب کاربری
+                  </Text>
+                  <Ionicons
+                    name="log-out-outline"
+                    size={18}
+                    color={colors.error.DEFAULT}
+                  />
+                </View>
+              </Pressable>
+            </MotiView>
+          </View>
+        </ScrollView>
+
+        <BottomSheet visible={editSheet} onClose={() => setEditSheet(false)}>
+          <View className="justify-center items-center gap-6 p-4">
+            <View className="relative rounded-full bg-purple-500 w-20 h-20 justify-center items-center">
+              <Text
+                className="font-vazir"
+                style={{ color: colors.neutral[50], fontSize: 24 }}
+              >
+                Ni
+              </Text>
+              <View className="bg-white p-0.5 rounded-full absolute bottom-0 end-2">
+                <Ionicons name="camera" size={16} />
+              </View>
+            </View>
+
+            <View className="relative w-full">
+              <Input
+                value={name}
+                onChangeText={setName}
+                placeholderTextColor={colors.primary[900]}
+                containerClassName="p-1 text-base rounded-2xl bg-white/50"
+                containerStyle={{
+                  borderWidth: 4,
+                  borderRadius: 8,
+                  borderColor: colors.primary[900],
+                }}
+                inputStyle={{
+                  color: colors.primary[900],
+                  fontFamily: "vazir",
+                }}
+              />
+              <Text
+                className="absolute -top-2 end-4 px-2 text-sm font-vazir"
+                style={{
+                  backgroundColor: cardBg,
+                  color: colors.neutral[50],
+                }}
+              >
+                نام
+              </Text>
+            </View>
+
+            <View className="relative w-full">
+              <Input
+                value={userName}
+                onChangeText={setUserName}
+                placeholderTextColor={colors.primary[900]}
+                containerClassName="p-1 text-base rounded-2xl bg-white/50"
+                containerStyle={{
+                  borderWidth: 4,
+                  borderRadius: 8,
+                  borderColor: colors.primary[900],
+                }}
+                inputStyle={{
+                  color: colors.primary[900],
+                  fontFamily: "vazir",
+                }}
+              />
+              <Text
+                className="absolute -top-2 end-4 px-2 text-sm font-vazir"
+                style={{
+                  backgroundColor: cardBg,
+                  color: colors.neutral[50],
+                }}
+              >
+                نام کاربری
+              </Text>
+            </View>
+
+            <View className="flex-row gap-2">
+              <Button
+                title="ذخیره پروفایل"
+                style={{
+                  backgroundColor: colors.primary[900],
+                  borderRadius: 8,
+                }}
+                className="w-1/2 p-2 text-sm"
+                onPress={() => setEditSheet(false)}
+              />
+              <Button
+                title="انصراف"
+                className="w-1/2 py-2 text-sm rounded-md"
+                textStyle={{ color: scheme === "dark" ? "black" : "white" }}
+                style={{ backgroundColor: colors.neutral[50], borderRadius: 8 }}
+                onPress={() => setEditSheet(false)}
+              />
+            </View>
+          </View>
+        </BottomSheet>
+
+        <BottomSheet visible={themeSheet} onClose={() => setThemeSheet(false)}>
+          <MotiView
+            from={{ opacity: 0, translateY: 20 }}
+            animate={{ opacity: 1, translateY: 0 }}
+            transition={{ type: "spring" }}
+            className="p-4"
           >
-            تاریخچه چت
-          </Text>
-
-          <DataBox>
-            <DataRow onPress={() => setArchiveSheet(true)}>
-              <View className="flex-row-reverse justify-between items-center">
-                <Text
-                  className="font-vazir text-base"
-                  style={{ color: colors.neutral[50] }}
-                >
-                  آرشیو چت‌ها
-                </Text>
-                <Ionicons
-                  name="chevron-back"
-                  size={20}
-                  color={colors.neutral[400]}
-                />
-              </View>
-            </DataRow>
-
-            <DataRow onPress={() => setArchiveSheet(true)}>
-              <View className="flex-row-reverse justify-between items-center">
-                <Text
-                  className="font-vazir text-base"
-                  style={{ color: colors.neutral[50] }}
-                >
-                  تاریخچه چت‌های آرشیو
-                </Text>
-                <Ionicons
-                  name="chevron-back"
-                  size={20}
-                  color={colors.neutral[400]}
-                />
-              </View>
-            </DataRow>
-
-            <DataRow
-              onPress={() => setClearHistorySheet(true)}
-              showBorder={false}
+            <Text
+              className="font-vazir text-xl text-center mb-6"
+              style={{ color: colors.neutral[50] }}
             >
-              <View className="flex-row-reverse justify-between items-center">
-                <Text
-                  className="font-vazir text-base"
-                  style={{ color: colors.error.DEFAULT }}
-                >
-                  پاک کردن تاریخچه چت
-                </Text>
-                <Ionicons
-                  name="chevron-back"
-                  size={20}
-                  color={colors.neutral[400]}
-                />
-              </View>
-            </DataRow>
-          </DataBox>
-        </View>
-      </ScrollView>
+              انتخاب تم
+            </Text>
 
-      <ExportBottomSheet />
-      <DeleteAccountBottomSheet />
-      <ClearHistoryBottomSheet />
-      <ArchiveBottomSheet />
+            <ThemeOption
+              theme="light"
+              label="روشن"
+              icon="sunny-outline"
+              currentTheme={selectedTheme}
+            />
+
+            <ThemeOption
+              theme="dark"
+              label="تاریک"
+              icon="moon-outline"
+              currentTheme={selectedTheme}
+            />
+
+            <ThemeOption
+              theme="system"
+              label="همراه با دستگاه"
+              icon="phone-portrait-outline"
+              currentTheme={selectedTheme}
+            />
+
+            <Button
+              title="تایید"
+              style={{
+                backgroundColor: colors.primary[900],
+                marginTop: 20,
+                paddingVertical: 14,
+                borderRadius: 10,
+              }}
+              textStyle={{
+                color: "white",
+                fontSize: 16,
+                fontFamily: "VazirMedium",
+              }}
+              onPress={() => setThemeSheet(false)}
+            />
+          </MotiView>
+        </BottomSheet>
+
+        <BottomSheet
+          visible={languageSheet}
+          onClose={() => setLanguageSheet(false)}
+        >
+          <MotiView
+            from={{ opacity: 0, translateY: 20 }}
+            animate={{ opacity: 1, translateY: 0 }}
+            transition={{ type: "spring" }}
+            className="p-4"
+          >
+            <Text
+              className="font-vazir text-xl text-center mb-6"
+              style={{ color: colors.neutral[50] }}
+            >
+              انتخاب زبان
+            </Text>
+
+            <LanguageOption
+              lang="fa"
+              label="فارسی"
+              currentLang={selectedLanguage}
+            />
+
+            <LanguageOption
+              lang="en"
+              label="English"
+              currentLang={selectedLanguage}
+            />
+
+            <Button
+              title="تایید"
+              style={{
+                backgroundColor: colors.primary[900],
+                marginTop: 20,
+                paddingVertical: 14,
+                borderRadius: 10,
+              }}
+              textStyle={{
+                color: "white",
+                fontSize: 16,
+                fontFamily: "VazirMedium",
+              }}
+              onPress={() => setLanguageSheet(false)}
+            />
+          </MotiView>
+        </BottomSheet>
+      </MotiView>
     </SafeAreaView>
   );
 };
 
-export default DataControl;
+export default Index;

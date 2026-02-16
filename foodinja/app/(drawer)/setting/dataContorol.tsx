@@ -5,27 +5,23 @@ import { MotiView } from "moti";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "@/constants/theme";
 import BottomSheet from "@/components/ui/BottomSheet";
+import Button from "@/components/ui/Button";
 
 const DataControl = () => {
   const { colors, isDark } = useTheme();
   const [modelImprovement, setModelImprovement] = useState(false);
 
-  // State برای کنترل انیمیشن اولیه
   const [hasAnimated, setHasAnimated] = useState(false);
-
-  // State برای کنترل BottomSheet‌ها
   const [exportSheet, setExportSheet] = useState(false);
   const [deleteAccountSheet, setDeleteAccountSheet] = useState(false);
   const [clearHistorySheet, setClearHistorySheet] = useState(false);
   const [archiveSheet, setArchiveSheet] = useState(false);
 
-  // Refs برای جلوگیری از رندر مجدد BottomSheet‌ها
   const exportSheetRef = useRef(false);
   const deleteSheetRef = useRef(false);
   const clearSheetRef = useRef(false);
   const archiveSheetRef = useRef(false);
 
-  // فقط یک بار انیمیشن اجرا شود
   useEffect(() => {
     setHasAnimated(true);
   }, []);
@@ -33,7 +29,6 @@ const DataControl = () => {
   const cardBg = isDark ? "#1C1C1E" : "#F5F5F5";
   const borderColor = isDark ? colors.neutral[800] : colors.neutral[200];
 
-  // کامپوننت باکس - انیمیشن فقط یک بار اجرا شود
   const DataBox = ({ children, className = "" }: any) => (
     <MotiView
       from={hasAnimated ? undefined : { opacity: 0, translateY: 20 }}
@@ -50,10 +45,9 @@ const DataControl = () => {
     </MotiView>
   );
 
-  // هدر باکس - بدون انیمیشن اضافه
   const BoxHeader = ({ title, icon, rightComponent }: any) => (
     <View
-      className="flex-row-reverse justify-between items-center p-4"
+      className="flex-row-reverse justify-between items-center px-4"
       style={{
         backgroundColor: isDark ? colors.neutral[800] : colors.primary[900],
         borderBottomWidth: 1,
@@ -65,7 +59,6 @@ const DataControl = () => {
     </View>
   );
 
-  // ردیف - بدون انیمیشن برای جلوگیری از اجرا هنگام کلیک
   const DataRow = ({ children, onPress, showBorder = true }: any) => (
     <Pressable onPress={onPress}>
       <View className="relative">
@@ -80,16 +73,6 @@ const DataControl = () => {
     </Pressable>
   );
 
-  // کامپوننت دکمه متنی - بدون انیمیشن
-  const TextButton = ({ title, onPress, color = colors.primary[500] }: any) => (
-    <Pressable onPress={onPress}>
-      <Text className="font-vazir text-base" style={{ color }}>
-        {title}
-      </Text>
-    </Pressable>
-  );
-
-  // BottomSheet خروجی گرفتن از داده‌ها - با استفاده از useMemo
   const ExportBottomSheet = () => {
     const [isVisible, setIsVisible] = useState(false);
 
@@ -120,7 +103,7 @@ const DataControl = () => {
               />
             </View>
             <Text
-              className="font-vazir-bold text-lg mb-2"
+              className="font-vazir text-lg mb-2"
               style={{ color: colors.neutral[50] }}
             >
               خروجی گرفتن از داده‌ها
@@ -136,18 +119,38 @@ const DataControl = () => {
             </Text>
           </View>
 
-          <View className="flex-row justify-center gap-4 mt-4">
-            <TextButton
+          <View className="flex-row gap-3 mt-4">
+            <Button
               title="خروجی گرفتن از داده"
+              style={{
+                backgroundColor: colors.primary[900],
+                borderRadius: 8,
+                flex: 1,
+              }}
+              textStyle={{
+                color: "white",
+                fontSize: 14,
+                fontFamily: "vazir",
+              }}
+              className="py-3"
               onPress={() => {
                 setExportSheet(false);
               }}
-              color={colors.primary[500]}
             />
-            <TextButton
+            <Button
               title="لغو"
+              style={{
+                backgroundColor: colors.neutral[50],
+                borderRadius: 8,
+                flex: 1,
+              }}
+              textStyle={{
+                color: isDark ? "black" : "white",
+                fontSize: 14,
+                fontFamily: "vazir",
+              }}
+              className="py-3"
               onPress={() => setExportSheet(false)}
-              color={colors.neutral[400]}
             />
           </View>
         </View>
@@ -155,7 +158,6 @@ const DataControl = () => {
     );
   };
 
-  // BottomSheet تایید حذف اکانت
   const DeleteAccountBottomSheet = () => {
     const [isVisible, setIsVisible] = useState(false);
 
@@ -189,7 +191,7 @@ const DataControl = () => {
               />
             </View>
             <Text
-              className="font-vazir-bold text-lg mb-2"
+              className="font-vazir text-lg mb-2"
               style={{ color: colors.neutral[50] }}
             >
               حذف حساب کاربری
@@ -203,18 +205,38 @@ const DataControl = () => {
             </Text>
           </View>
 
-          <View className="flex-row justify-center gap-6 mt-4">
-            <TextButton
+          <View className="flex-row gap-3 mt-4">
+            <Button
               title="حذف اکانت"
+              style={{
+                backgroundColor: colors.error.DEFAULT,
+                borderRadius: 8,
+                flex: 1,
+              }}
+              textStyle={{
+                color: "white",
+                fontSize: 14,
+                fontFamily: "vazir",
+              }}
+              className="py-3"
               onPress={() => {
                 setDeleteAccountSheet(false);
               }}
-              color={colors.error.DEFAULT}
             />
-            <TextButton
+            <Button
               title="لغو"
+              style={{
+                backgroundColor: colors.neutral[50],
+                borderRadius: 8,
+                flex: 1,
+              }}
+              textStyle={{
+                color: isDark ? "black" : "white",
+                fontSize: 14,
+                fontFamily: "vazir",
+              }}
+              className="py-3"
               onPress={() => setDeleteAccountSheet(false)}
-              color={colors.neutral[400]}
             />
           </View>
         </View>
@@ -222,7 +244,6 @@ const DataControl = () => {
     );
   };
 
-  // BottomSheet پاک کردن تاریخچه
   const ClearHistoryBottomSheet = () => {
     const [isVisible, setIsVisible] = useState(false);
 
@@ -256,7 +277,7 @@ const DataControl = () => {
               />
             </View>
             <Text
-              className="font-vazir-bold text-lg mb-2"
+              className="font-vazir text-lg mb-2"
               style={{ color: colors.neutral[50] }}
             >
               پاک کردن تاریخچه چت
@@ -270,18 +291,38 @@ const DataControl = () => {
             </Text>
           </View>
 
-          <View className="flex-row justify-center gap-6 mt-4">
-            <TextButton
+          <View className="flex-row gap-3 mt-4">
+            <Button
               title="پاک کردن"
+              style={{
+                backgroundColor: colors.error.DEFAULT,
+                borderRadius: 8,
+                flex: 1,
+              }}
+              textStyle={{
+                color: "white",
+                fontSize: 14,
+                fontFamily: "vazir",
+              }}
+              className="py-3"
               onPress={() => {
                 setClearHistorySheet(false);
               }}
-              color={colors.error.DEFAULT}
             />
-            <TextButton
+            <Button
               title="لغو"
+              style={{
+                backgroundColor: colors.neutral[50],
+                borderRadius: 8,
+                flex: 1,
+              }}
+              textStyle={{
+                color: isDark ? "black" : "white",
+                fontSize: 14,
+                fontFamily: "vazir",
+              }}
+              className="py-3"
               onPress={() => setClearHistorySheet(false)}
-              color={colors.neutral[400]}
             />
           </View>
         </View>
@@ -289,7 +330,6 @@ const DataControl = () => {
     );
   };
 
-  // BottomSheet آرشیو
   const ArchiveBottomSheet = () => {
     const [isVisible, setIsVisible] = useState(false);
 
@@ -311,24 +351,47 @@ const DataControl = () => {
         onClose={() => setArchiveSheet(false)}
       >
         <View className="p-6">
-          <Text
-            className="font-vazir-bold text-lg mb-4 text-center"
-            style={{ color: colors.neutral[50] }}
-          >
-            آرشیو چت‌ها
-          </Text>
-          <Text
-            className="font-vazir text-sm text-center mb-6"
-            style={{ color: colors.neutral[400], lineHeight: 22 }}
-          >
-            این بخش در حال توسعه است. به زودی می‌توانید چت‌های خود را آرشیو
-            کنید.
-          </Text>
+          <View className="items-center mb-6">
+            <View
+              className="w-16 h-16 rounded-full justify-center items-center mb-4"
+              style={{ backgroundColor: colors.primary[900] + "20" }}
+            >
+              <Ionicons
+                name="archive-outline"
+                size={32}
+                color={colors.primary[500]}
+              />
+            </View>
+            <Text
+              className="font-vazir text-lg mb-2"
+              style={{ color: colors.neutral[50] }}
+            >
+              آرشیو چت‌ها
+            </Text>
+            <Text
+              className="font-vazir text-sm text-center mb-4"
+              style={{ color: colors.neutral[400], lineHeight: 22 }}
+            >
+              این بخش در حال توسعه است. به زودی می‌توانید چت‌های خود را آرشیو
+              کنید.
+            </Text>
+          </View>
+
           <View className="items-center">
-            <TextButton
+            <Button
               title="باشه"
+              style={{
+                backgroundColor: colors.primary[900],
+                borderRadius: 8,
+                paddingHorizontal: 32,
+              }}
+              textStyle={{
+                color: "white",
+                fontSize: 14,
+                fontFamily: "vazir",
+              }}
+              className="py-3"
               onPress={() => setArchiveSheet(false)}
-              color={colors.primary[500]}
             />
           </View>
         </View>
@@ -342,7 +405,6 @@ const DataControl = () => {
       style={{ backgroundColor: colors.background }}
     >
       <ScrollView className="flex-1 px-4" showsVerticalScrollIndicator={false}>
-        {/* هدر - مشابه صفحه Upgrade */}
         <MotiView
           from={hasAnimated ? undefined : { opacity: 0, translateY: -20 }}
           animate={{ opacity: 1, translateY: 0 }}
@@ -363,16 +425,14 @@ const DataControl = () => {
           </Text>
         </MotiView>
 
-        {/* بخش داده‌ها */}
         <View className="mt-4">
           <Text
-            className="font-vazir-bold text-lg mb-3"
+            className="font-vazir text-lg mb-3"
             style={{ color: colors.neutral[50], textAlign: "right" }}
           >
             داده‌ها
           </Text>
 
-          {/* باکس بهبود مدل */}
           <DataBox>
             <BoxHeader
               title="بهبود مدل برای همه"
@@ -409,7 +469,6 @@ const DataControl = () => {
             </View>
           </DataBox>
 
-          {/* باکس خروجی گرفتن از داده‌ها */}
           <DataBox>
             <DataRow onPress={() => setExportSheet(true)}>
               <View className="flex-row-reverse justify-between items-center">
@@ -428,7 +487,6 @@ const DataControl = () => {
             </DataRow>
           </DataBox>
 
-          {/* باکس پاک کردن اکانت */}
           <DataBox>
             <DataRow
               onPress={() => setDeleteAccountSheet(true)}
@@ -451,16 +509,14 @@ const DataControl = () => {
           </DataBox>
         </View>
 
-        {/* بخش تاریخچه چت */}
         <View className="mt-6">
           <Text
-            className="font-vazir-bold text-lg mb-3"
+            className="font-vazir text-lg mb-3"
             style={{ color: colors.neutral[50], textAlign: "right" }}
           >
             تاریخچه چت
           </Text>
 
-          {/* باکس تاریخچه چت - با سه ردیف */}
           <DataBox>
             <DataRow onPress={() => setArchiveSheet(true)}>
               <View className="flex-row-reverse justify-between items-center">
@@ -514,12 +570,8 @@ const DataControl = () => {
             </DataRow>
           </DataBox>
         </View>
-
-        {/* فضای خالی */}
-        <View className="h-8" />
       </ScrollView>
 
-      {/* BottomSheet‌ها */}
       <ExportBottomSheet />
       <DeleteAccountBottomSheet />
       <ClearHistoryBottomSheet />
