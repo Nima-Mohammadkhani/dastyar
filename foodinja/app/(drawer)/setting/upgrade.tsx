@@ -123,7 +123,7 @@ const Upgrade = () => {
   return (
     <SafeAreaView
       className="flex-1"
-      style={{ backgroundColor: colors.background }}
+      style={{ backgroundColor: isDark ? "#000000" : "white" }}
     >
       <ScrollView className="flex-1 px-4" showsVerticalScrollIndicator={false}>
         {/* هدر */}

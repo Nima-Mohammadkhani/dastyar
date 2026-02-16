@@ -49,7 +49,22 @@ const SettingsLayout = () => {
         }}
       />
 
-      <Stack.Screen name="dataContorol" options={{ title: "Data Control" }} />
+      <Stack.Screen
+        name="dataContorol"
+        options={{
+          title: "کنترل داده ها",
+          headerTitleStyle: { fontFamily: "VazirMedium" },
+          headerLeft: () => (
+            <Pressable onPress={() => router.back()}>
+              <Ionicons
+                name="arrow-back"
+                size={24}
+                color={scheme == "dark" ? "white" : "black"}
+              />
+            </Pressable>
+          ),
+        }}
+      />
 
       <Stack.Screen name="general" options={{ title: "General" }} />
 
