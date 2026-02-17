@@ -126,7 +126,6 @@ const Upgrade = () => {
       style={{ backgroundColor: isDark ? "#000000" : "white" }}
     >
       <ScrollView className="flex-1 px-4" showsVerticalScrollIndicator={false}>
-        {/* هدر */}
         <MotiView
           from={{ opacity: 0, translateY: -20 }}
           animate={{ opacity: 1, translateY: 0 }}

@@ -70,7 +70,19 @@ const SettingsLayout = () => {
 
       <Stack.Screen
         name="personalization"
-        options={{ title: "Personalization" }}
+        options={{
+          title: "شخصی سازی",
+          headerTitleStyle: { fontFamily: "VazirMedium" },
+          headerLeft: () => (
+            <Pressable onPress={() => router.back()}>
+              <Ionicons
+                name="arrow-back"
+                size={24}
+                color={scheme == "dark" ? "white" : "black"}
+              />
+            </Pressable>
+          ),
+        }}
       />
 
       <Stack.Screen

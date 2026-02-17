@@ -55,7 +55,14 @@ const Index = () => {
   };
 
   const settingFeature = {
-    myModel: [{ id: 1, title: "شخصی سازی", icon: true }],
+    myModel: [
+      {
+        id: 1,
+        title: "شخصی سازی",
+        icon: true,
+        action: () => router.push("/(drawer)/setting/personalization"),
+      },
+    ],
     feature: [
       { id: 1, title: "فضای کاری", value: "شخصی" },
       {

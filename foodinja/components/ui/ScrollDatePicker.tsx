@@ -134,7 +134,7 @@ const ScrollDatePicker: React.FC<ScrollDatePickerProps> = ({
                     color: isSelected
                       ? colors.primary[500]
                       : colors.neutral[400],
-                    fontFamily: "vazir",
+                    fontFamily: "VazirMedium",
                   }}
                 >
                   {displayText}
