@@ -221,7 +221,6 @@ const About = () => {
             )}
           </Pressable>
 
-          {/* لینکدین */}
           <Pressable onPress={() => handleLinkPress(dev.linkedin)}>
             {({ pressed }) => (
               <MotiView
@@ -245,7 +244,6 @@ const About = () => {
             )}
           </Pressable>
 
-          {/* گیت‌هاب */}
           <Pressable onPress={() => handleLinkPress(dev.github)}>
             {({ pressed }) => (
               <MotiView
@@ -253,16 +251,10 @@ const About = () => {
                 transition={{ type: "spring" }}
                 className="items-center"
               >
-                <View
-                  className="w-12 h-12 rounded-md justify-center items-center mb-1"
-                  style={{ backgroundColor: isDark ? "#fff" : "#333" + "20" }}
-                >
-                  <Ionicons
-                    name="logo-github"
-                    size={22}
-                    color={isDark ? "#fff" : "#333"}
-                  />
-                </View>
+                <Image
+                  source={require("@/assets/images/logo/github.png")}
+                  className="w-12 h-12 mb-1"
+                />
                 <Text
                   className="font-vazir text-xs"
                   style={{ color: colors.neutral[400] }}
