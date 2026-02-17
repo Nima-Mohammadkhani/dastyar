@@ -12,8 +12,10 @@ import {
   Image,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { MotiView, MotiImage } from "moti";
+import { MotiView } from "moti";
 import DrawerButton from "@/components/ui/DrawerButton";
+import BottomSheet from "@/components/ui/BottomSheet";
+import { Ionicons } from "@expo/vector-icons";
 
 const MOCK_RESPONSES = [
   "سلام! چه خوشحالم که می‌خوای یه غذای خوشمزه بپزی. برای شروع، چه نوع غذایی دوست داری؟ ایرانی، فرنگی یا شاید یه دسر؟",
@@ -29,13 +31,17 @@ interface Message {
 }
 
 const Index = () => {
-  const { backgroundImage, colors } = useTheme();
+  const { backgroundImage, colors, isDark } = useTheme();
   const [prompt, setPrompt] = useState("");
   const [keyboardHeight, setKeyboardHeight] = useState(0);
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
   const [currentTypingText, setCurrentTypingText] = useState("");
+  const [loginSheet, setLoginSheet] = useState<boolean>(false);
+
+  const cardBg = isDark ? "#1C1C1E" : "#F5F5F5";
+  const borderColor = isDark ? colors.neutral[800] : colors.neutral[200];
 
   useEffect(() => {
     const showSub = Keyboard.addListener("keyboardDidShow", (e) => {
@@ -125,7 +131,7 @@ const Index = () => {
         style={{ flex: 1, backgroundColor: "transparent" }}
         className="px-4"
       >
-        <DrawerButton />
+        <DrawerButton setLoginSheet={setLoginSheet} />
         <View style={{ flex: 1 }}>
           {showWelcomeScreen ? (
             <Pressable className="flex-1" onPress={Keyboard.dismiss}>
@@ -259,6 +265,151 @@ const Index = () => {
             />
           </MotiView>
         </View>
+
+        <BottomSheet visible={loginSheet} onClose={() => setLoginSheet(false)}>
+          <MotiView
+            from={{ opacity: 0, translateY: 20 }}
+            animate={{ opacity: 1, translateY: 0 }}
+            exit={{ opacity: 0, translateY: 20 }}
+            transition={{ type: "timing", duration: 400 }}
+            className="p-6"
+          >
+            <View className="flex-row justify-between items-center mb-4">
+              <View style={{ width: 24 }} />
+              <Pressable onPress={() => setLoginSheet(false)}>
+                <Ionicons name="close" size={24} color={colors.neutral[400]} />
+              </Pressable>
+            </View>
+
+            <View className="items-center gap-2 mb-6">
+              <Image
+                source={require("@/assets/images/logo/logo.png")}
+                className="w-20 h-20"
+              />
+              <Text
+                className="font-vazir text-xl"
+                style={{ color: colors.neutral[50] }}
+              >
+                به فودینجا خوش آمدید
+              </Text>
+              <Text
+                className="font-vazir text-lg text-center"
+                style={{ color: colors.neutral[50] }}
+              >
+                وارد شوید یا یک حساب کاربری ایجاد کنید
+              </Text>
+            </View>
+
+            <View
+              className="bg-primary-50 rounded-md p-4 mb-6"
+              style={{ backgroundColor: colors.primary[900] + "10" }}
+            >
+              <Text
+                className="font-vazir text-sm text-center"
+                style={{ color: colors.neutral[400], lineHeight: 22 }}
+              >
+                با مدل‌های هوشمندتر کار کنید، شخصی‌سازی کنید و چت‌های خود را
+                ذخیره کنید
+              </Text>
+            </View>
+
+            <Pressable
+              onPress={() => {
+                console.log("Google login");
+              }}
+              className="mb-3"
+            >
+              <View
+                className="flex-row-reverse items-center justify-between p-4 rounded-md"
+                style={{
+                  backgroundColor: cardBg,
+                  borderWidth: 1,
+                  borderColor: borderColor,
+                }}
+              >
+                <View className="flex-row items-center gap-3">
+                  <Image
+                    source={require("@/assets/images/logo/google.png")}
+                    className="w-6 h-6"
+                  />
+                  <Text
+                    className="font-vazir text-base"
+                    style={{ color: colors.neutral[50] }}
+                  >
+                    ادامه با گوگل
+                  </Text>
+                </View>
+                <Ionicons
+                  name="chevron-back"
+                  size={20}
+                  color={colors.neutral[400]}
+                />
+              </View>
+            </Pressable>
+
+            <Pressable
+              onPress={() => {
+                setLoginSheet(false);
+              }}
+              className="mb-3"
+            >
+              <View
+                className="flex-row-reverse items-center justify-between p-4 rounded-md"
+                style={{
+                  backgroundColor: cardBg,
+                  borderWidth: 1,
+                  borderColor: borderColor,
+                }}
+              >
+                <Text
+                  className="font-vazir text-base"
+                  style={{ color: colors.neutral[50] }}
+                >
+                  ثبت نام
+                </Text>
+                <Ionicons
+                  name="chevron-back"
+                  size={20}
+                  color={colors.neutral[400]}
+                />
+              </View>
+            </Pressable>
+
+            <Pressable
+              onPress={() => {
+                setLoginSheet(false);
+              }}
+            >
+              <View
+                className="flex-row-reverse items-center justify-between p-4 rounded-md"
+                style={{
+                  backgroundColor: cardBg,
+                  borderWidth: 1,
+                  borderColor: borderColor,
+                }}
+              >
+                <Text
+                  className="font-vazir text-base"
+                  style={{ color: colors.neutral[50] }}
+                >
+                  ورود
+                </Text>
+                <Ionicons
+                  name="chevron-back"
+                  size={20}
+                  color={colors.neutral[400]}
+                />
+              </View>
+            </Pressable>
+
+            <Text
+              className="font-vazir text-xs text-center mt-6"
+              style={{ color: colors.neutral[400] }}
+            >
+              با ادامه، شرایط و قوانین فودینجا را می‌پذیرید
+            </Text>
+          </MotiView>
+        </BottomSheet>
       </SafeAreaView>
     </ImageBackground>
   );
