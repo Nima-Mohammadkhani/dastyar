@@ -80,8 +80,9 @@ const DISHES = [
 
 const ToneBottomSheet = memo(
   ({ visible, onClose, selectedTone, onSelect }: any) => {
+    const { isDark } = useTheme();
     const { colors } = useTheme();
-    const borderColor = colors.neutral[800];
+    const borderColor = isDark ? "#1C1C1E" : "#F5F5F5";
 
     return (
       <BottomSheet visible={visible} onClose={onClose}>
@@ -141,8 +142,9 @@ const ToneBottomSheet = memo(
 const FoodTypeBottomSheet = memo(
   ({ visible, onClose, selectedTypes, onConfirm }: any) => {
     const { colors } = useTheme();
-    const cardBg = colors.neutral[800];
-    const borderColor = colors.neutral[800];
+    const { isDark } = useTheme();
+    const cardBg = isDark ? "#1C1C1E" : "#F5F5F5";
+    const borderColor = isDark ? "#1C1C1E" : "#F5F5F5";
     const [tempTypes, setTempTypes] = useState<string[]>([]);
 
     const foodTypes = [
@@ -235,8 +237,9 @@ const FoodTypeBottomSheet = memo(
 const IngredientsBottomSheet = memo(
   ({ visible, onClose, selectedItems, onConfirm }: any) => {
     const { colors } = useTheme();
-    const cardBg = colors.neutral[800];
-    const borderColor = colors.neutral[800];
+    const { isDark } = useTheme();
+    const cardBg = isDark ? "#1C1C1E" : "#F5F5F5";
+    const borderColor = isDark ? "#1C1C1E" : "#F5F5F5";
     const [tempItems, setTempItems] = useState<string[]>([]);
     const [search, setSearch] = useState("");
 
@@ -297,7 +300,7 @@ const IngredientsBottomSheet = memo(
           </View>
 
           {tempItems.length > 0 && (
-            <View className="flex-row flex-wrap gap-2 mb-4">
+            <View className="flex-row-reverse flex-wrap gap-2 mb-4">
               {tempItems.map((item) => (
                 <View
                   key={item}
@@ -386,8 +389,9 @@ const IngredientsBottomSheet = memo(
 const DishesBottomSheet = memo(
   ({ visible, onClose, selectedItems, onConfirm }: any) => {
     const { colors } = useTheme();
-    const cardBg = colors.neutral[800];
-    const borderColor = colors.neutral[800];
+    const { isDark } = useTheme();
+    const cardBg = isDark ? "#1C1C1E" : "#F5F5F5";
+    const borderColor = isDark ? "#1C1C1E" : "#F5F5F5";
     const [tempItems, setTempItems] = useState<string[]>([]);
     const [search, setSearch] = useState("");
 
