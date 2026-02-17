@@ -130,7 +130,7 @@ const DataControl = () => {
               textStyle={{
                 color: "white",
                 fontSize: 14,
-                fontFamily: "vazir",
+                fontFamily: "VazirMedium",
               }}
               className="py-3"
               onPress={() => {
@@ -147,7 +147,7 @@ const DataControl = () => {
               textStyle={{
                 color: isDark ? "black" : "white",
                 fontSize: 14,
-                fontFamily: "vazir",
+                fontFamily: "VazirMedium",
               }}
               className="py-3"
               onPress={() => setExportSheet(false)}
@@ -216,7 +216,7 @@ const DataControl = () => {
               textStyle={{
                 color: "white",
                 fontSize: 14,
-                fontFamily: "vazir",
+                fontFamily: "VazirMedium",
               }}
               className="py-3"
               onPress={() => {
@@ -233,7 +233,7 @@ const DataControl = () => {
               textStyle={{
                 color: isDark ? "black" : "white",
                 fontSize: 14,
-                fontFamily: "vazir",
+                fontFamily: "VazirMedium",
               }}
               className="py-3"
               onPress={() => setDeleteAccountSheet(false)}
@@ -302,7 +302,7 @@ const DataControl = () => {
               textStyle={{
                 color: "white",
                 fontSize: 14,
-                fontFamily: "vazir",
+                fontFamily: "VazirMedium",
               }}
               className="py-3"
               onPress={() => {
@@ -319,7 +319,7 @@ const DataControl = () => {
               textStyle={{
                 color: isDark ? "black" : "white",
                 fontSize: 14,
-                fontFamily: "vazir",
+                fontFamily: "VazirMedium",
               }}
               className="py-3"
               onPress={() => setClearHistorySheet(false)}
@@ -388,9 +388,9 @@ const DataControl = () => {
               textStyle={{
                 color: "white",
                 fontSize: 14,
-                fontFamily: "vazir",
+                fontFamily: "VazirMedium",
               }}
-              className="py-3"
+              className="py-3 w-full"
               onPress={() => setArchiveSheet(false)}
             />
           </View>
