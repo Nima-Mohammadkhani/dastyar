@@ -39,6 +39,7 @@ export default function RootLayout() {
         <BottomSheetModalProvider>
           <Stack>
             <Stack.Screen name="(drawer)" options={{ headerShown: false }} />
+            <Stack.Screen name="auth" options={{ headerShown: false }} />
           </Stack>
         </BottomSheetModalProvider>
         <StatusBar style="auto" />

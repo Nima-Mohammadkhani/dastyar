@@ -16,6 +16,7 @@ import { MotiView } from "moti";
 import DrawerButton from "@/components/ui/DrawerButton";
 import BottomSheet from "@/components/ui/BottomSheet";
 import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 
 const MOCK_RESPONSES = [
   "سلام! چه خوشحالم که می‌خوای یه غذای خوشمزه بپزی. برای شروع، چه نوع غذایی دوست داری؟ ایرانی، فرنگی یا شاید یه دسر؟",
@@ -39,7 +40,7 @@ const Index = () => {
   const scrollViewRef = useRef<ScrollView>(null);
   const [currentTypingText, setCurrentTypingText] = useState("");
   const [loginSheet, setLoginSheet] = useState<boolean>(false);
-
+  const router = useRouter();
   const cardBg = isDark ? "#1C1C1E" : "#F5F5F5";
   const borderColor = isDark ? colors.neutral[800] : colors.neutral[200];
 
@@ -315,7 +316,8 @@ const Index = () => {
 
             <Pressable
               onPress={() => {
-                console.log("Google login");
+                router.push("/auth/login");
+                setLoginSheet(false);
               }}
               className="mb-3"
             >
@@ -349,6 +351,7 @@ const Index = () => {
 
             <Pressable
               onPress={() => {
+                router.push("/auth/login");
                 setLoginSheet(false);
               }}
               className="mb-3"
@@ -377,6 +380,7 @@ const Index = () => {
 
             <Pressable
               onPress={() => {
+                router.push("/auth/login");
                 setLoginSheet(false);
               }}
             >
