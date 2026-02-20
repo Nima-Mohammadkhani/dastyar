@@ -10,16 +10,18 @@ import {
   Pressable,
   ImageBackground,
   Image,
+  Alert,
+  ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { MotiView, MotiImage } from "moti";
+import { MotiView } from "moti";
 import DrawerButton from "@/components/ui/DrawerButton";
-
-const MOCK_RESPONSES = [
-  "سلام! چه خوشحالم که می‌خوای یه غذای خوشمزه بپزی. برای شروع، چه نوع غذایی دوست داری؟ ایرانی، فرنگی یا شاید یه دسر؟",
-  "عالیه! برای قورمه سبزی، اول باید سبزی‌های تازه بخری. سبزی قورمه، تره، گشنیز و جعفری. حدود ۵۰۰ گرم سبزی برای ۴ نفر کافیه.",
-  "حالا بذار مراحل پخت رو برات توضیح بدم:\n\n۱. اول سبزی‌ها رو خوب بشور و خرد کن\n۲. گوشت رو با پیاز تفت بده تا طلایی بشه\n۳. سبزی‌ها رو اضافه کن و تفت بده\n۴. لیمو عمانی و رب رو اضافه کن\n۵. آب بریز و بذار بپزه\n\nآتیش ملایم و صبر، راز یه قورمه سبزی خوشمزه است! 🍲",
-];
+import { useLocalSearchParams, useRouter } from "expo-router";
+import {
+  useGetConversationByIdQuery,
+  useSendChatMessageMutation,
+} from "@/redux/service/app";
+import type { ChatMessage } from "@/types/api";
 
 interface Message {
   id: string;
@@ -30,12 +32,44 @@ interface Message {
 
 const ChatId = () => {
   const { backgroundImage, colors } = useTheme();
+  const { chatId } = useLocalSearchParams<{ chatId: string }>();
+  const router = useRouter();
+  const conversationId = chatId ? parseInt(chatId, 10) : null;
+  
   const [prompt, setPrompt] = useState("");
   const [keyboardHeight, setKeyboardHeight] = useState(0);
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
   const [currentTypingText, setCurrentTypingText] = useState("");
+
+  const {
+    data: conversationData,
+    isLoading: isLoadingConversation,
+    error: conversationError,
+  } = useGetConversationByIdQuery(conversationId!, {
+    skip: !conversationId,
+  });
+
+  const [sendChatMessage, { isLoading: isSending }] = useSendChatMessageMutation();
+
+  useEffect(() => {
+    if (conversationData?.messages) {
+      const formattedMessages: Message[] = conversationData.messages.map((msg) => ({
+        id: msg.id.toString(),
+        text: msg.content,
+        isUser: msg.role === "user",
+      }));
+      setMessages(formattedMessages);
+    }
+  }, [conversationData]);
+
+  useEffect(() => {
+    if (conversationError) {
+      Alert.alert("خطا", "خطا در بارگذاری مکالمه");
+      router.back();
+    }
+  }, [conversationError, router]);
 
   useEffect(() => {
     const showSub = Keyboard.addListener("keyboardDidShow", (e) => {
@@ -79,12 +113,13 @@ const ChatId = () => {
     }, typingSpeed);
   };
 
-  const handleSendMessage = () => {
-    if (prompt.trim() === "" || isLoading) return;
+  const handleSendMessage = async () => {
+    if (prompt.trim() === "" || isLoading || isSending || !conversationId) return;
 
+    const userMessageText = prompt.trim();
     const userMessage: Message = {
       id: Date.now().toString(),
-      text: prompt.trim(),
+      text: userMessageText,
       isUser: true,
     };
 
@@ -92,12 +127,21 @@ const ChatId = () => {
     setPrompt("");
     setIsLoading(true);
 
-    setTimeout(() => {
-      const botMessageId = (Date.now() + 1).toString();
-      const botResponse =
-        MOCK_RESPONSES[messages.length / 2] ||
-        "متوجه نشدم، میشه یه چیز دیگه بپرسی؟";
+    const history: ChatMessage[] = messages
+      .filter((msg) => !msg.isTyping)
+      .map((msg) => ({
+        role: msg.isUser ? "user" : "assistant",
+        content: msg.text,
+      }));
 
+    try {
+      const result = await sendChatMessage({
+        query: userMessageText,
+        conversation_id: conversationId,
+        history: history.length > 0 ? history : undefined,
+      }).unwrap();
+
+      const botMessageId = (Date.now() + 1).toString();
       const botMessage: Message = {
         id: botMessageId,
         text: "",
@@ -108,12 +152,35 @@ const ChatId = () => {
       setMessages((prev) => [...prev, botMessage]);
 
       setTimeout(() => {
-        typeMessage(botResponse, botMessageId);
+        typeMessage(result.response, botMessageId);
       }, 300);
-    }, 1000);
+    } catch (error: any) {
+      setIsLoading(false);
+      const errorMessage = error?.data?.message || error?.message || "خطا در ارسال پیام";
+      Alert.alert("خطا", errorMessage);
+      
+      setMessages((prev) => prev.filter((msg) => msg.id !== userMessage.id));
+    }
   };
 
-  const showWelcomeScreen = messages.length === 0;
+  const showWelcomeScreen = messages.length === 0 && !isLoadingConversation;
+
+  if (isLoadingConversation) {
+    return (
+      <ImageBackground
+        source={backgroundImage}
+        resizeMode="repeat"
+        style={{ flex: 1 }}
+      >
+        <SafeAreaView
+          style={{ flex: 1, backgroundColor: "transparent" }}
+          className="px-4 justify-center items-center"
+        >
+          <ActivityIndicator size="large" color={colors.primary[500]} />
+        </SafeAreaView>
+      </ImageBackground>
+    );
+  }
 
   return (
     <ImageBackground
@@ -240,22 +307,22 @@ const ChatId = () => {
                 color: colors.primary[900],
                 fontFamily: "vazir",
               }}
-              editable={!isLoading}
+              editable={!isLoading && !isSending}
               onSubmitEditing={handleSendMessage}
             />
             <Button
               className="absolute w-12 h-12 top-1.5 start-2 px-2 rounded-full"
               style={{
-                backgroundColor: isLoading
+                backgroundColor: isLoading || isSending
                   ? colors.neutral[400]
                   : colors.primary[900],
               }}
-              iconRight={isLoading ? "pause" : "send"}
+              iconRight={isLoading || isSending ? "pause" : "send"}
               iconClassName="mr-1"
-              iconRotate={isLoading ? 0 : 220}
+              iconRotate={isLoading || isSending ? 0 : 220}
               iconCenter={true}
               onPress={handleSendMessage}
-              disabled={isLoading || prompt.trim() === ""}
+              disabled={isLoading || isSending || prompt.trim() === "" || !conversationId}
             />
           </MotiView>
         </View>

@@ -1,5 +1,5 @@
 import { useDrawerStatus } from "@react-navigation/drawer";
-import { View, Text, ScrollView, Pressable } from "react-native";
+import { View, Text, ScrollView, Pressable, ActivityIndicator } from "react-native";
 import Input from "./ui/Input";
 import { useState, useEffect } from "react";
 import { useTheme } from "@/constants/theme";
@@ -8,6 +8,9 @@ import { Ionicons } from "@expo/vector-icons";
 import { MotiView } from "moti";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
+import { useSelector } from "react-redux";
+import type { RootState } from "@/redux/store";
+import { useGetConversationsQuery } from "@/redux/service/app";
 
 const CustomDrawerContent = () => {
   const [search, setSearch] = useState<string>("");
@@ -16,31 +19,23 @@ const CustomDrawerContent = () => {
   const isDrawerOpen = drawerStatus === "open";
   const [animateKey, setAnimateKey] = useState(0);
   const router = useRouter();
+  const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
+  
+  const { data: conversationsData, isLoading, refetch } = useGetConversationsQuery(undefined, {
+    skip: !isAuthenticated,
+  });
+
   useEffect(() => {
     if (isDrawerOpen) {
       setAnimateKey((prev) => prev + 1);
+      if (isAuthenticated) {
+        refetch();
+      }
     }
-  }, [isDrawerOpen]);
+  }, [isDrawerOpen, isAuthenticated, refetch]);
 
-  const history = [
-    { id: 1, title: "طرز تهیه قرمه سبزی" },
-    { id: 2, title: "چطوری قیمه درست کنم؟" },
-    { id: 3, title: "میخوام زرشک پلو با مرغ درست کنم چطوری؟" },
-    { id: 4, title: "بهم فستجون یاد بده بپزم" },
-    { id: 5, title: "چطوری دوپیازه درست کنم؟" },
-    { id: 6, title: "چطوری دلمه درست کنم و چند نوع داره؟" },
-    { id: 7, title: "میخوام املت درست کنم راهنمایی ام کن" },
-    { id: 8, title: "مواد اولیه برای پخت پیتزا چی هست؟" },
-    { id: 9, title: "میخوام مرغ ترش درست کنم راهنمایی ام کن" },
-    { id: 10, title: "چند تا تخم مرغ برای کوکو سبزی نیاز هست؟" },
-    { id: 11, title: "میخوام املت درست کنم راهنمایی ام کن" },
-    { id: 12, title: "مواد اولیه برای پخت پیتزا چی هست؟" },
-    { id: 13, title: "میخوام مرغ ترش درست کنم راهنمایی ام کن" },
-    { id: 14, title: "چند تا تخم مرغ برای کوکو سبزی نیاز هست؟" },
-    { id: 15, title: "چند تا تخم مرغ برای کوکو سبزی نیاز هست؟" },
-  ];
-
-  const filterHistory = history.filter((item) =>
+  const conversations = conversationsData?.conversations || [];
+  const filterHistory = conversations.filter((item) =>
     item.title.toLowerCase().includes(search.toLocaleLowerCase()),
   );
 
@@ -105,21 +100,42 @@ const CustomDrawerContent = () => {
 
       <ScrollView className="flex-1 mt-4" showsVerticalScrollIndicator={false}>
         <View className="flex flex-col gap-2">
-          {filterHistory.map((item, index) => (
-            <MotiView
-              key={`${item.id}-${animateKey}`}
-              from={{ opacity: 0, translateX: -40 }}
-              animate={{ opacity: 1, translateX: 0 }}
-              transition={{ type: "timing", duration: 350, delay: index * 70 }}
-            >
+          {isLoading ? (
+            <View className="flex-1 justify-center items-center py-8">
+              <ActivityIndicator size="large" color={colors.primary[500]} />
+            </View>
+          ) : filterHistory.length === 0 ? (
+            <View className="flex-1 justify-center items-center py-8">
               <Text
-                className="font-vazir py-4"
-                style={{ color: colors.neutral[50] }}
+                className="font-vazir text-sm text-center"
+                style={{ color: colors.neutral[400] }}
               >
-                {item.title}
+                {isAuthenticated ? "هیچ مکالمه‌ای یافت نشد" : "برای مشاهده مکالمات حساب خود شوید"}
               </Text>
-            </MotiView>
-          ))}
+            </View>
+          ) : (
+            filterHistory.map((item, index) => (
+              <MotiView
+                key={`${item.conversation_id}-${animateKey}`}
+                from={{ opacity: 0, translateX: -40 }}
+                animate={{ opacity: 1, translateX: 0 }}
+                transition={{ type: "timing", duration: 350, delay: index * 70 }}
+              >
+                <Pressable
+                  onPress={() => {
+                    router.push(`/(drawer)/chat/${item.conversation_id}`);
+                  }}
+                >
+                  <Text
+                    className="font-vazir py-4"
+                    style={{ color: colors.neutral[50] }}
+                  >
+                    {item.title}
+                  </Text>
+                </Pressable>
+              </MotiView>
+            ))
+          )}
         </View>
       </ScrollView>
 

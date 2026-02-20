@@ -10,6 +10,8 @@ import {
   Pressable,
   ImageBackground,
   Image,
+  Alert,
+  ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { MotiView } from "moti";
@@ -17,12 +19,12 @@ import DrawerButton from "@/components/ui/DrawerButton";
 import BottomSheet from "@/components/ui/BottomSheet";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-
-const MOCK_RESPONSES = [
-  "سلام! چه خوشحالم که می‌خوای یه غذای خوشمزه بپزی. برای شروع، چه نوع غذایی دوست داری؟ ایرانی، فرنگی یا شاید یه دسر؟",
-  "عالیه! برای قورمه سبزی، اول باید سبزی‌های تازه بخری. سبزی قورمه، تره، گشنیز و جعفری. حدود ۵۰۰ گرم سبزی برای ۴ نفر کافیه.",
-  "حالا بذار مراحل پخت رو برات توضیح بدم:\n\n۱. اول سبزی‌ها رو خوب بشور و خرد کن\n۲. گوشت رو با پیاز تفت بده تا طلایی بشه\n۳. سبزی‌ها رو اضافه کن و تفت بده\n۴. لیمو عمانی و رب رو اضافه کن\n۵. آب بریز و بذار بپزه\n\nآتیش ملایم و صبر، راز یه قورمه سبزی خوشمزه است! 🍲",
-];
+import { useSelector } from "react-redux";
+import type { RootState } from "@/redux/store";
+import {
+  useSendChatMessageMutation,
+} from "@/redux/service/app";
+import type { ChatMessage } from "@/types/api";
 
 interface Message {
   id: string;
@@ -40,9 +42,13 @@ const Index = () => {
   const scrollViewRef = useRef<ScrollView>(null);
   const [currentTypingText, setCurrentTypingText] = useState("");
   const [loginSheet, setLoginSheet] = useState<boolean>(false);
+  const [conversationId, setConversationId] = useState<number | null>(null);
   const router = useRouter();
   const cardBg = isDark ? "#1C1C1E" : "#F5F5F5";
   const borderColor = isDark ? colors.neutral[800] : colors.neutral[200];
+  
+  const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
+  const [sendChatMessage, { isLoading: isSending }] = useSendChatMessageMutation();
 
   useEffect(() => {
     const showSub = Keyboard.addListener("keyboardDidShow", (e) => {
@@ -86,12 +92,18 @@ const Index = () => {
     }, typingSpeed);
   };
 
-  const handleSendMessage = () => {
-    if (prompt.trim() === "" || isLoading) return;
+  const handleSendMessage = async () => {
+    if (prompt.trim() === "" || isLoading || isSending) return;
 
+    if (!isAuthenticated) {
+      setLoginSheet(true);
+      return;
+    }
+
+    const userMessageText = prompt.trim();
     const userMessage: Message = {
       id: Date.now().toString(),
-      text: prompt.trim(),
+      text: userMessageText,
       isUser: true,
     };
 
@@ -99,12 +111,25 @@ const Index = () => {
     setPrompt("");
     setIsLoading(true);
 
-    setTimeout(() => {
-      const botMessageId = (Date.now() + 1).toString();
-      const botResponse =
-        MOCK_RESPONSES[messages.length / 2] ||
-        "متوجه نشدم، میشه یه چیز دیگه بپرسی؟";
+    const history: ChatMessage[] = messages
+      .filter((msg) => !msg.isTyping)
+      .map((msg) => ({
+        role: msg.isUser ? "user" : "assistant",
+        content: msg.text,
+      }));
 
+    try {
+      const result = await sendChatMessage({
+        query: userMessageText,
+        conversation_id: conversationId,
+        history: history.length > 0 ? history : undefined,
+      }).unwrap();
+
+      if (result.conversation_id && !conversationId) {
+        setConversationId(result.conversation_id);
+      }
+
+      const botMessageId = (Date.now() + 1).toString();
       const botMessage: Message = {
         id: botMessageId,
         text: "",
@@ -115,9 +140,15 @@ const Index = () => {
       setMessages((prev) => [...prev, botMessage]);
 
       setTimeout(() => {
-        typeMessage(botResponse, botMessageId);
+        typeMessage(result.response, botMessageId);
       }, 300);
-    }, 1000);
+    } catch (error: any) {
+      setIsLoading(false);
+      const errorMessage = error?.data?.message || error?.message || "خطا در ارسال پیام";
+      Alert.alert("خطا", errorMessage);
+      
+      setMessages((prev) => prev.filter((msg) => msg.id !== userMessage.id));
+    }
   };
 
   const showWelcomeScreen = messages.length === 0;

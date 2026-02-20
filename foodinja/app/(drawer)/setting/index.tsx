@@ -6,6 +6,7 @@ import {
   useColorScheme,
   View,
   Pressable,
+  ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import BottomSheet from "@/components/ui/BottomSheet";
@@ -14,27 +15,52 @@ import { Ionicons } from "@expo/vector-icons";
 import Input from "@/components/ui/Input";
 import { MotiView } from "moti";
 import { useRouter } from "expo-router";
+import { useSelector, useDispatch } from "react-redux";
+import type { RootState } from "@/redux/store";
+import { logout } from "@/redux/authSlice";
+import {
+  useGetUserInfoQuery,
+} from "@/redux/service/app";
 
 const Index = () => {
   const { colors, isDark } = useTheme();
   const scheme = useColorScheme();
+  const dispatch = useDispatch();
+  const router = useRouter();
+  const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
+  
   const [editSheet, setEditSheet] = useState<boolean>(false);
   const [themeSheet, setThemeSheet] = useState<boolean>(false);
   const [languageSheet, setLanguageSheet] = useState<boolean>(false);
-  const [name, setName] = useState<string>("Nima");
-  const [userName, setUserName] = useState<string>("NimaMohammadkhani");
   const [selectedTheme, setSelectedTheme] = useState<string>("system");
   const [selectedLanguage, setSelectedLanguage] = useState<string>("fa");
-  const router = useRouter();
+  const [editName, setEditName] = useState<string>("");
+  const [editUserName, setEditUserName] = useState<string>("");
+  
+  const { data: userInfo, isLoading: isLoadingUser } = useGetUserInfoQuery(undefined, {
+    skip: !isAuthenticated,
+  });
+
+  const name = userInfo?.name || "";
+  const userName = userInfo?.email || "";
+  const userInitials = name
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2) || "U";
 
   const changeTheme = (theme: string) => {
     setSelectedTheme(theme);
-    console.log("Theme changed to:", theme);
   };
 
   const changeLanguage = (lang: string) => {
     setSelectedLanguage(lang);
-    console.log("Language changed to:", lang);
+  };
+
+  const handleLogout = () => {
+    dispatch(logout());
+    router.replace("/auth/login");
   };
 
   const getThemeDisplayValue = () => {
@@ -71,7 +97,7 @@ const Index = () => {
         action: () => router.push("/(drawer)/setting/upgrade"),
         icon: true,
       },
-      { id: 3, title: "ایمیل", value: "nimamohammadkhani" },
+      { id: 3, title: "ایمیل", value: userInfo?.email || "" },
       {
         id: 4,
         title: "تم رنگی",
@@ -237,27 +263,37 @@ const Index = () => {
             className="items-center gap-2"
           >
             <View className="rounded-full bg-purple-500 w-20 h-20 justify-center items-center">
-              <Text
-                className="font-vazir"
-                style={{ color: colors.neutral[50], fontSize: 24 }}
-              >
-                Ni
-              </Text>
+              {isLoadingUser ? (
+                <ActivityIndicator size="small" color={colors.neutral[50]} />
+              ) : (
+                <Text
+                  className="font-vazir"
+                  style={{ color: colors.neutral[50], fontSize: 24 }}
+                >
+                  {userInitials}
+                </Text>
+              )}
             </View>
 
             <View className="items-center">
-              <Text
-                className="font-vazir"
-                style={{ color: colors.neutral[50] }}
-              >
-                {name}
-              </Text>
-              <Text
-                className="font-vazir"
-                style={{ color: colors.neutral[50] }}
-              >
-                {userName}
-              </Text>
+              {isLoadingUser ? (
+                <ActivityIndicator size="small" color={colors.neutral[50]} />
+              ) : (
+                <>
+                  <Text
+                    className="font-vazir"
+                    style={{ color: colors.neutral[50] }}
+                  >
+                    {name || "کاربر"}
+                  </Text>
+                  <Text
+                    className="font-vazir"
+                    style={{ color: colors.neutral[50] }}
+                  >
+                    {userName || ""}
+                  </Text>
+                </>
+              )}
             </View>
 
             <Button
@@ -323,7 +359,7 @@ const Index = () => {
             >
               <Pressable
                 android_ripple={{ color: "#ddd" }}
-                onPress={() => console.log("Logout")}
+                onPress={handleLogout}
                 className="p-4 flex-row justify-between items-center"
                 style={({ pressed }) => [
                   {
@@ -371,8 +407,8 @@ const Index = () => {
 
             <View className="relative w-full">
               <Input
-                value={name}
-                onChangeText={setName}
+                value={editName || name}
+                onChangeText={setEditName}
                 placeholderTextColor={colors.primary[900]}
                 containerClassName="p-1 text-base rounded-2xl bg-white/50"
                 containerStyle={{
@@ -398,8 +434,8 @@ const Index = () => {
 
             <View className="relative w-full">
               <Input
-                value={userName}
-                onChangeText={setUserName}
+                value={editUserName || userName}
+                onChangeText={setEditUserName}
                 placeholderTextColor={colors.primary[900]}
                 containerClassName="p-1 text-base rounded-2xl bg-white/50"
                 containerStyle={{
