@@ -9,18 +9,6 @@ import { setToken, logout, refreshToken } from "./authSlice";
 
 const BASE_URL = "https://foodinja.ir/api/";
 
-async function verifyNetworkDown(): Promise<boolean> {
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 3000);
-    await fetch(BASE_URL, { method: 'HEAD', signal: controller.signal });
-    clearTimeout(timeoutId);
-    return false;
-  } catch {
-    return true;
-  }
-}
-
 const baseQuery = fetchBaseQuery({
   baseUrl: BASE_URL,
   prepareHeaders: (headers, { getState }) => {
@@ -45,11 +33,16 @@ export const customBaseQuery: BaseQueryFn<
 
   if (result.error?.status === 401) {
     const refreshTokenValue = (api.getState() as RootState).auth?.refreshToken;
-    const refreshResult = await refreshToken(refreshTokenValue);
+    
+    if (refreshTokenValue) {
+      const refreshResult = await refreshToken(refreshTokenValue);
 
-    if (refreshResult?.token) {
-      api.dispatch(setToken(refreshResult.token));
-      result = await baseQuery(args, api, extraOptions);
+      if (refreshResult?.token) {
+        api.dispatch(setToken(refreshResult.token));
+        result = await baseQuery(args, api, extraOptions);
+      } else {
+        api.dispatch(logout());
+      }
     } else {
       api.dispatch(logout());
     }

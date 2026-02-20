@@ -7,6 +7,8 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Alert,
+  ActivityIndicator,
 } from "react-native";
 import { useState, useEffect } from "react";
 import { MotiView } from "moti";
@@ -15,16 +17,31 @@ import { useTheme } from "@/constants/theme";
 import Input from "@/components/ui/Input";
 import Button from "@/components/ui/Button";
 import { toPersianNumber } from "@/utils/converter";
+import * as WebBrowser from "expo-web-browser";
+import * as Linking from "expo-linking";
+import { useDispatch } from "react-redux";
+import { useRouter } from "expo-router";
+import { setAuthTokens, setUserData } from "@/redux/authSlice";
+import { useGetUserInfoQuery } from "@/redux/service/app";
 
 type Step = "email" | "otp";
 
+WebBrowser.maybeCompleteAuthSession();
+
 const Login = () => {
   const { colors, isDark } = useTheme();
+  const dispatch = useDispatch();
+  const router = useRouter();
   const [currentStep, setCurrentStep] = useState<Step>("email");
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState(["", "", "", "", ""]);
   const [timer, setTimer] = useState(120);
   const [hasAnimated, setHasAnimated] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const { refetch: refetchUserInfo } = useGetUserInfoQuery(undefined, {
+    skip: true,
+  });
 
   const cardBg = isDark ? "#1C1C1E" : "#F5F5F5";
   const borderColor = isDark ? colors.neutral[800] : colors.neutral[200];
@@ -62,18 +79,119 @@ const Login = () => {
     setOtp(newOtp);
 
     if (value && index < 4) {
-      const nextInput = `otp-${index + 1}`;
+      // Auto-focus next input if needed
     }
   };
 
   const handleOtpSubmit = () => {
     if (otp.every((digit) => digit !== "")) {
-      console.log("OTP Submitted:", otp.join(""));
+      // Handle OTP submission
     }
   };
 
-  const handleGoogleLogin = () => {
-    console.log("Google login");
+  useEffect(() => {
+    const handleDeepLink = async (event: { url: string }) => {
+      const { url } = event;
+
+      if (url.includes("oauth2/redirect")) {
+        try {
+          const parsedUrl = Linking.parse(url);
+          const accessToken = parsedUrl.queryParams?.access_token as string;
+          const refreshToken = parsedUrl.queryParams?.refresh_token as string;
+
+          if (accessToken && refreshToken) {
+            dispatch(
+              setAuthTokens({
+                access_token: accessToken,
+                refresh_token: refreshToken,
+              }),
+            );
+
+            try {
+              const userInfoResult = await refetchUserInfo();
+              if (userInfoResult.data) {
+                dispatch(setUserData(userInfoResult.data));
+              }
+            } catch (error) {
+              console.error("Failed to fetch user info:", error);
+            }
+
+            router.replace("/(drawer)");
+          }
+        } catch (error) {
+          console.error("OAuth redirect error:", error);
+          Alert.alert("خطا", "خطا در احراز هویت. لطفا دوباره تلاش کنید.");
+        }
+      }
+    };
+
+    const subscription = Linking.addEventListener("url", handleDeepLink);
+
+    Linking.getInitialURL().then((url) => {
+      if (url) {
+        handleDeepLink({ url });
+      }
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, [dispatch, router, refetchUserInfo]);
+
+  const handleGoogleLogin = async () => {
+    try {
+      setIsLoading(true);
+
+      const loginUrl = "https://foodinja.ir/api/users/login";
+      const redirectUrl = Linking.createURL("(drawer)/", {
+        scheme: "foodinja",
+      });
+
+      const result = await WebBrowser.openAuthSessionAsync(
+        loginUrl,
+        redirectUrl,
+      );
+
+      if (result.type === "success" && result.url) {
+        const parsedUrl = Linking.parse(result.url);
+        const accessToken = parsedUrl.queryParams?.access_token as string;
+        const refreshToken = parsedUrl.queryParams?.refresh_token as string;
+
+        if (accessToken && refreshToken) {
+          dispatch(
+            setAuthTokens({
+              access_token: accessToken,
+              refresh_token: refreshToken,
+            }),
+          );
+
+          try {
+            const userInfoResult = await refetchUserInfo();
+            if (userInfoResult.data) {
+              dispatch(setUserData(userInfoResult.data));
+            }
+          } catch (error) {
+            console.error("Failed to fetch user info:", error);
+          }
+
+          router.replace("/(drawer)");
+        } else {
+          Alert.alert("خطا", "احراز هویت ناموفق بود. لطفا دوباره تلاش کنید.");
+        }
+      } else if (result.type === "cancel") {
+        // User cancelled
+      } else {
+        Alert.alert("خطا", "خطا در باز کردن صفحه ورود. لطفا دوباره تلاش کنید.");
+      }
+    } catch (error) {
+      console.error("Google login error:", error);
+      Alert.alert(
+        "خطا",
+        "خطا در اتصال به سرور. لطفا اتصال اینترنت خود را بررسی کنید.",
+      );
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handlePhoneLogin = () => {
@@ -188,32 +306,46 @@ const Login = () => {
                   />
                 </View>
 
-                <Pressable onPress={handleGoogleLogin} className="mb-3">
+                <Pressable
+                  onPress={handleGoogleLogin}
+                  className="mb-3"
+                  disabled={isLoading}
+                >
                   <View
                     className="flex-row-reverse items-center justify-between p-4 rounded-md"
                     style={{
                       backgroundColor: cardBg,
                       borderWidth: 1,
                       borderColor: borderColor,
+                      opacity: isLoading ? 0.6 : 1,
                     }}
                   >
                     <View className="flex-row items-center gap-3">
-                      <Image
-                        source={require("@/assets/images/logo/google.png")}
-                        className="w-6 h-6"
-                      />
+                      {isLoading ? (
+                        <ActivityIndicator
+                          size="small"
+                          color={colors.primary[500]}
+                        />
+                      ) : (
+                        <Image
+                          source={require("@/assets/images/logo/google.png")}
+                          className="w-6 h-6"
+                        />
+                      )}
                       <Text
                         className="font-vazir text-base"
                         style={{ color: colors.neutral[50] }}
                       >
-                        ادامه با گوگل
+                        {isLoading ? "در حال اتصال..." : "ادامه با گوگل"}
                       </Text>
                     </View>
-                    <Ionicons
-                      name="chevron-back"
-                      size={20}
-                      color={colors.neutral[400]}
-                    />
+                    {!isLoading && (
+                      <Ionicons
+                        name="chevron-back"
+                        size={20}
+                        color={colors.neutral[400]}
+                      />
+                    )}
                   </View>
                 </Pressable>
 
