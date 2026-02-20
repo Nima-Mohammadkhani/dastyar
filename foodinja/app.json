@@ -8,27 +8,24 @@
     "scheme": "foodinja",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
-
     "ios": {
       "supportsTablet": true,
       "icon": "./assets/images/logo/appIcon.png"
     },
-
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/logo/appIcon.png",
         "backgroundColor": "#E6F4FE"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.nimamohammadkhani.foodinja"
     },
-
     "web": {
       "output": "static",
       "favicon": "./assets/images/logo/appIcon.png",
       "bundler": "metro"
     },
-
     "plugins": [
       "expo-router",
       [
@@ -44,10 +41,15 @@
         }
       ]
     ],
-
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "cc508a91-a83d-4f74-88d6-161f8ee2cdc5"
+      }
     }
   }
 }
