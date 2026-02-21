@@ -10,6 +10,15 @@ import type {
   RestoreConversationResponse,
   DeletedConversationsResponse,
   TokenStatus,
+  PersonalizationSettings,
+  UpdatePersonalizationRequest,
+  IngredientsResponse,
+  DishesResponse,
+  FoodTypesResponse,
+  TonesResponse,
+  GuestChatRequest,
+  GuestChatResponse,
+  GuestStatusResponse,
 } from "@/types/api";
 
 export const App = rtkInstance.injectEndpoints({
@@ -79,6 +88,71 @@ export const App = rtkInstance.injectEndpoints({
         body,
       }),
     }),
+    // ============ Personalization APIs ============
+    getPersonalization: builder.query<PersonalizationSettings, void>({
+      query: () => ({
+        url: "users/personalization",
+        method: "GET",
+      }),
+    }),
+    updatePersonalization: builder.mutation<
+      PersonalizationSettings,
+      UpdatePersonalizationRequest
+    >({
+      query: (body) => ({
+        url: "users/personalization",
+        method: "PUT",
+        body,
+      }),
+    }),
+    getIngredients: builder.query<IngredientsResponse, void>({
+      query: () => ({
+        url: "reference/ingredients",
+        method: "GET",
+      }),
+    }),
+    getDishes: builder.query<DishesResponse, void>({
+      query: () => ({
+        url: "reference/dishes",
+        method: "GET",
+      }),
+    }),
+    getFoodTypes: builder.query<FoodTypesResponse, void>({
+      query: () => ({
+        url: "reference/food-types",
+        method: "GET",
+      }),
+    }),
+    getTones: builder.query<TonesResponse, void>({
+      query: () => ({
+        url: "reference/tones",
+        method: "GET",
+      }),
+    }),
+    sendGuestChat: builder.mutation<GuestChatResponse, GuestChatRequest>({
+      query: (body) => ({
+        url: "guest/chat",
+        method: "POST",
+        body,
+      }),
+    }),
+    getGuestStatus: builder.query<
+      GuestStatusResponse,
+      { device_id: string; session_id?: string }
+    >({
+      query: (params) => {
+        const queryParams = new URLSearchParams({
+          device_id: params.device_id,
+        });
+        if (params.session_id) {
+          queryParams.append("session_id", params.session_id);
+        }
+        return {
+          url: `guest/status?${queryParams.toString()}`,
+          method: "GET",
+        };
+      },
+    }),
   }),
   overrideExisting: false,
 });
@@ -94,4 +168,15 @@ export const {
   useGetDeletedConversationsQuery,
   useGetTokenStatusQuery,
   useExchangeCodeMutation,
+  // Personalization
+  useGetPersonalizationQuery,
+  useUpdatePersonalizationMutation,
+  // Reference Data
+  useGetIngredientsQuery,
+  useGetDishesQuery,
+  useGetFoodTypesQuery,
+  useGetTonesQuery,
+  // Guest Chat
+  useSendGuestChatMutation,
+  useGetGuestStatusQuery,
 } = App;

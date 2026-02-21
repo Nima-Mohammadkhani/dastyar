@@ -24,6 +24,7 @@ import type { RootState } from "@/redux/store";
 import {
   useSendChatMessageMutation,
 } from "@/redux/service/app";
+import { useGuestChat } from "@/hooks/useGuestChat";
 import type { ChatMessage } from "@/types/api";
 
 interface Message {
@@ -42,6 +43,8 @@ const Index = () => {
   const scrollViewRef = useRef<ScrollView>(null);
   const [currentTypingText, setCurrentTypingText] = useState("");
   const [loginSheet, setLoginSheet] = useState<boolean>(false);
+  const [limitSheet, setLimitSheet] = useState<boolean>(false);
+  const [limitMessage, setLimitMessage] = useState<string>("");
   const [conversationId, setConversationId] = useState<number | null>(null);
   const router = useRouter();
   const cardBg = isDark ? "#1C1C1E" : "#F5F5F5";
@@ -49,6 +52,13 @@ const Index = () => {
   
   const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
   const [sendChatMessage, { isLoading: isSending }] = useSendChatMessageMutation();
+  
+  const {
+    sendMessage: sendGuestMessage,
+    isSending: isSendingGuest,
+    status: guestStatus,
+    error: guestError,
+  } = useGuestChat();
 
   useEffect(() => {
     const showSub = Keyboard.addListener("keyboardDidShow", (e) => {
@@ -93,12 +103,7 @@ const Index = () => {
   };
 
   const handleSendMessage = async () => {
-    if (prompt.trim() === "" || isLoading || isSending) return;
-
-    if (!isAuthenticated) {
-      setLoginSheet(true);
-      return;
-    }
+    if (prompt.trim() === "" || isLoading || isSending || isSendingGuest) return;
 
     const userMessageText = prompt.trim();
     const userMessage: Message = {
@@ -111,22 +116,34 @@ const Index = () => {
     setPrompt("");
     setIsLoading(true);
 
-    const history: ChatMessage[] = messages
-      .filter((msg) => !msg.isTyping)
-      .map((msg) => ({
-        role: msg.isUser ? "user" : "assistant",
-        content: msg.text,
-      }));
-
     try {
-      const result = await sendChatMessage({
-        query: userMessageText,
-        conversation_id: conversationId,
-        history: history.length > 0 ? history : undefined,
-      }).unwrap();
+      let response: string;
 
-      if (result.conversation_id && !conversationId) {
-        setConversationId(result.conversation_id);
+      if (isAuthenticated) {
+        const history: ChatMessage[] = messages
+          .filter((msg) => !msg.isTyping)
+          .map((msg) => ({
+            role: msg.isUser ? "user" : "assistant",
+            content: msg.text,
+          }));
+
+        const result = await sendChatMessage({
+          query: userMessageText,
+          conversation_id: conversationId,
+          history: history.length > 0 ? history : undefined,
+        }).unwrap();
+
+        if (result.conversation_id && !conversationId) {
+          setConversationId(result.conversation_id);
+        }
+
+        response = result.response;
+      } else {
+        const result = await sendGuestMessage(userMessageText);
+        if (!result) {
+          throw new Error("خطا در ارسال پیام");
+        }
+        response = result.response;
       }
 
       const botMessageId = (Date.now() + 1).toString();
@@ -140,12 +157,32 @@ const Index = () => {
       setMessages((prev) => [...prev, botMessage]);
 
       setTimeout(() => {
-        typeMessage(result.response, botMessageId);
+        typeMessage(response, botMessageId);
       }, 300);
     } catch (error: any) {
       setIsLoading(false);
-      const errorMessage = error?.data?.message || error?.message || "خطا در ارسال پیام";
-      Alert.alert("خطا", errorMessage);
+      
+      if (error?.status === 429) {
+        const limitError = error.data;
+        const errorType = limitError?.error || "limit";
+        let message = "محدودیت رسیده";
+        
+        if (errorType === "ip_limit") {
+          message = "محدودیت IP: لطفاً وارد شوید";
+        } else if (errorType === "device_limit") {
+          message = "محدودیت دستگاه: لطفاً وارد شوید";
+        } else if (errorType === "session_limit") {
+          message = "محدودیت نشست: لطفاً وارد شوید";
+        } else {
+          message = limitError?.message || "محدودیت رسیده: لطفاً وارد شوید";
+        }
+        
+        setLimitMessage(message);
+        setLimitSheet(true);
+      } else {
+        const errorMessage = error?.data?.message || error?.message || "خطا در ارسال پیام";
+        Alert.alert("خطا", errorMessage);
+      }
       
       setMessages((prev) => prev.filter((msg) => msg.id !== userMessage.id));
     }
@@ -293,7 +330,7 @@ const Index = () => {
               iconRotate={isLoading ? 0 : 220}
               iconCenter={true}
               onPress={handleSendMessage}
-              disabled={isLoading || prompt.trim() === ""}
+              disabled={isLoading || isSending || isSendingGuest || prompt.trim() === ""}
             />
           </MotiView>
         </View>
@@ -443,6 +480,138 @@ const Index = () => {
             >
               با ادامه، شرایط و قوانین فودینجا را می‌پذیرید
             </Text>
+          </MotiView>
+        </BottomSheet>
+
+        <BottomSheet visible={limitSheet} onClose={() => setLimitSheet(false)}>
+          <MotiView
+            from={{ opacity: 0, translateY: 20 }}
+            animate={{ opacity: 1, translateY: 0 }}
+            exit={{ opacity: 0, translateY: 20 }}
+            transition={{ type: "timing", duration: 400 }}
+            className="p-6"
+          >
+          
+
+            <View className="items-center gap-4 mb-6">
+            <Image
+                source={require("@/assets/images/logo/logo.png")}
+                className="w-20 h-20"
+              />
+              <Text
+                className="font-vazir text-xl text-center"
+                style={{ color: colors.neutral[50] }}
+              >
+                محدودیت رسیده
+              </Text>
+              <Text
+                className="font-vazir text-base text-center px-4"
+                style={{ color: colors.neutral[400], lineHeight: 24 }}
+              >
+                {limitMessage}
+              </Text>
+              <Text
+                className="font-vazir text-sm text-center px-4 mt-2"
+                style={{ color: colors.neutral[400], lineHeight: 22 }}
+              >
+                برای ادامه استفاده از فودینجا، لطفاً ثبت نام کنید یا وارد اپ شوید
+              </Text>
+            </View>
+
+            <View
+              className="rounded-md p-4 mb-6"
+              style={{ backgroundColor: colors.primary[900] + "10" , direction:"rtl"}}
+            >
+              <View className="flex-row items-center gap-2 mb-2">
+                <Ionicons
+                  name="checkmark-circle"
+                  size={20}
+                  color={colors.primary[500]}
+                />
+                <Text
+                  className="font-vazir text-sm flex-1"
+                  style={{ color: colors.neutral[50] }}
+                >
+                  بدون محدودیت در ارسال پیام
+                </Text>
+              </View>
+              <View className="flex-row items-center gap-2 mb-2">
+                <Ionicons
+                  name="checkmark-circle"
+                  size={20}
+                  color={colors.primary[500]}
+                />
+                <Text
+                  className="font-vazir text-sm flex-1"
+                  style={{ color: colors.neutral[50] }}
+                >
+                  ذخیره تاریخچه چت‌ها
+                </Text>
+              </View>
+              <View className="flex-row items-center gap-2">
+                <Ionicons
+                  name="checkmark-circle"
+                  size={20}
+                  color={colors.primary[500]}
+                />
+                <Text
+                  className="font-vazir text-sm flex-1"
+                  style={{ color: colors.neutral[50] }}
+                >
+                  شخصی‌سازی تجربه استفاده
+                </Text>
+              </View>
+            </View>
+
+           <View className="flex-row gap-2 w-full">
+           <Pressable
+              onPress={() => {
+                setLimitSheet(false);
+                router.push("/auth/login");
+              }}
+              className="mb-3 w-1/2"
+            >
+              <View
+                className="flex-row-reverse items-center justify-center p-4 rounded-md"
+                style={{
+                  backgroundColor: colors.primary[900],
+                  borderWidth: 1,
+                  borderColor: colors.primary[900],
+                }}
+              >
+                <Text
+                  className="font-vazir text-base"
+                  style={{ color: "white" }}
+                >
+                  ورود / ثبت نام
+                </Text>
+                <Ionicons
+                  name="chevron-back"
+                  size={20}
+                  color="white"
+                  style={{ marginRight: 8 }}
+                />
+              </View>
+            </Pressable>
+
+            <Pressable onPress={() => setLimitSheet(false)} className="w-1/2">
+              <View
+                className="flex-row-reverse items-center justify-center p-4 rounded-md"
+                style={{
+                  backgroundColor: cardBg,
+                  borderWidth: 1,
+                  borderColor: borderColor,
+                }}
+              >
+                <Text
+                  className="font-vazir text-base"
+                  style={{ color: colors.neutral[50] }}
+                >
+                  بستن
+                </Text>
+              </View>
+            </Pressable>
+           </View>
           </MotiView>
         </BottomSheet>
       </SafeAreaView>

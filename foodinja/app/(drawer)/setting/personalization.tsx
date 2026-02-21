@@ -1,6 +1,6 @@
 import { SafeAreaView } from "react-native-safe-area-context";
-import { View, Text, ScrollView, Pressable, TextInput } from "react-native";
-import { useState, useEffect, useCallback, memo } from "react";
+import { View, Text, ScrollView, Pressable, TextInput, Alert, ActivityIndicator } from "react-native";
+import { useState, useEffect, useCallback, memo, useMemo } from "react";
 import { MotiView } from "moti";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "@/constants/theme";
@@ -8,81 +8,35 @@ import BottomSheet from "@/components/ui/BottomSheet";
 import Button from "@/components/ui/Button";
 import ScrollDatePicker from "@/components/ui/ScrollDatePicker";
 import { toPersianNumber } from "@/utils/converter";
-
-const INGREDIENTS = [
-  "گوشت قرمز",
-  "مرغ",
-  "ماهی",
-  "تخم‌مرغ",
-  "برنج",
-  "ماکارونی",
-  "سیب‌زمینی",
-  "گوجه",
-  "خیار",
-  "پیاز",
-  "سیر",
-  "هویج",
-  "کدو",
-  "بادمجان",
-  "فلفل دلمه‌ای",
-  "قارچ",
-  "لبنیات",
-  "پنیر",
-  "ماست",
-  "کره",
-  "روغن",
-  "آرد",
-  "شکر",
-  "نمک",
-  "فلفل",
-  "زردچوبه",
-  "دارچین",
-  "زعفران",
-  "رب گوجه",
-  "سس گوجه",
-  "سس مایونز",
-  "خیارشور",
-  "زیتون",
-  "گردو",
-  "بادام",
-  "کشمش",
-  "خرما",
-  "عسل",
-  "شکلات",
-  "پودر کاکائو",
-  "وانیل",
-  "خامه",
-  "ژلاتین",
-];
-
-const DISHES = [
-  "قورمه سبزی",
-  "فسنجان",
-  "زرشک پلو با مرغ",
-  "ته چین",
-  "لوبیا پلو",
-  "عدس پلو",
-  "سبزی پلو با ماهی",
-  "کشک بادمجان",
-  "میرزا قاسمی",
-  "بورانی",
-  "کوفته تبریزی",
-  "دلمه برگ مو",
-  "کباب کوبیده",
-  "جوجه کباب",
-  "چلو گوشت",
-  "آبگوشت",
-  "کله جوش",
-  "شیرین پلو",
-  "آلبالو پلو",
-  "مرصع پلو",
-];
+import {
+  useGetPersonalizationQuery,
+  useUpdatePersonalizationMutation,
+  useGetIngredientsQuery,
+  useGetDishesQuery,
+  useGetFoodTypesQuery,
+  useGetTonesQuery,
+} from "@/redux/service/app";
+import { useSelector } from "react-redux";
+import type { RootState } from "@/redux/store";
 
 const ToneBottomSheet = memo(
-  ({ visible, onClose, selectedTone, onSelect }: any) => {
+  ({ visible, onClose, selectedToneId, onSelect, tones }: any) => {
     const { isDark } = useTheme();
     const { colors } = useTheme();
     const borderColor = isDark ? "#1C1C1E" : "#F5F5F5";
+
+    if (!tones || tones.length === 0) {
+      return (
+        <BottomSheet visible={visible} onClose={onClose}>
+          <View className="p-6 items-center">
+            <ActivityIndicator size="large" color={colors.primary[500]} />
+            <Text className="font-vazir text-sm mt-4" style={{ color: colors.neutral[400] }}>
+              در حال بارگذاری...
+            </Text>
+          </View>
+        </BottomSheet>
+      );
+    }
 
     return (
       <BottomSheet visible={visible} onClose={onClose}>
@@ -94,11 +48,11 @@ const ToneBottomSheet = memo(
             سبک و لحن پایه
           </Text>
 
-          {["صمیمی", "رسمی", "خلاق", "ساده و سریع"].map((tone) => (
+          {tones.map((tone: any) => (
             <Pressable
-              key={tone}
+              key={tone.id}
               onPress={() => {
-                onSelect(tone);
+                onSelect(tone.id);
               }}
             >
               <View
@@ -107,7 +61,7 @@ const ToneBottomSheet = memo(
                   borderBottomWidth: 1,
                   borderBottomColor: borderColor,
                   backgroundColor:
-                    selectedTone === tone
+                    selectedToneId === tone.id
                       ? colors.primary[900] + "10"
                       : "transparent",
                 }}
@@ -116,14 +70,14 @@ const ToneBottomSheet = memo(
                   className="font-vazir text-base"
                   style={{
                     color:
-                      selectedTone === tone
+                      selectedToneId === tone.id
                         ? colors.primary[500]
                         : colors.neutral[50],
                   }}
                 >
-                  {tone}
+                  {tone.name}
                 </Text>
-                {selectedTone === tone && (
+                {selectedToneId === tone.id && (
                   <Ionicons
                     name="checkmark-circle"
                     size={24}
@@ -140,39 +94,43 @@ const ToneBottomSheet = memo(
 );
 
 const FoodTypeBottomSheet = memo(
-  ({ visible, onClose, selectedTypes, onConfirm }: any) => {
+  ({ visible, onClose, selectedTypeIds, onConfirm, foodTypes }: any) => {
     const { colors } = useTheme();
     const { isDark } = useTheme();
     const cardBg = isDark ? "#1C1C1E" : "#F5F5F5";
     const borderColor = isDark ? "#1C1C1E" : "#F5F5F5";
-    const [tempTypes, setTempTypes] = useState<string[]>([]);
-
-    const foodTypes = [
-      "غذای اصلی",
-      "دسر",
-      "شیرینی",
-      "نوشیدنی",
-      "پیش‌غذا",
-      "سوپ",
-    ];
+    const [tempTypeIds, setTempTypeIds] = useState<number[]>([]);
 
     useEffect(() => {
       if (visible) {
-        setTempTypes([...selectedTypes]);
+        setTempTypeIds([...selectedTypeIds]);
       }
-    }, [visible]);
+    }, [visible, selectedTypeIds]);
 
-    const toggleType = (type: string) => {
-      if (tempTypes.includes(type)) {
-        setTempTypes(tempTypes.filter((t) => t !== type));
+    const toggleType = (typeId: number) => {
+      if (tempTypeIds.includes(typeId)) {
+        setTempTypeIds(tempTypeIds.filter((id) => id !== typeId));
       } else {
-        setTempTypes([...tempTypes, type]);
+        setTempTypeIds([...tempTypeIds, typeId]);
       }
     };
 
     const handleConfirm = () => {
-      onConfirm(tempTypes);
+      onConfirm(tempTypeIds);
     };
+
+    if (!foodTypes || foodTypes.length === 0) {
+      return (
+        <BottomSheet visible={visible} onClose={onClose}>
+          <View className="p-6 items-center">
+            <ActivityIndicator size="large" color={colors.primary[500]} />
+            <Text className="font-vazir text-sm mt-4" style={{ color: colors.neutral[400] }}>
+              در حال بارگذاری...
+            </Text>
+          </View>
+        </BottomSheet>
+      );
+    }
 
     return (
       <BottomSheet visible={visible} onClose={onClose}>
@@ -185,16 +143,16 @@ const FoodTypeBottomSheet = memo(
           </Text>
 
           <View className="flex-row-reverse flex-wrap gap-2 mb-6">
-            {foodTypes.map((type) => (
-              <Pressable key={type} onPress={() => toggleType(type)}>
+            {foodTypes.map((type: any) => (
+              <Pressable key={type.id} onPress={() => toggleType(type.id)}>
                 <View
                   className="px-4 py-2 rounded-md"
                   style={{
-                    backgroundColor: tempTypes.includes(type)
+                    backgroundColor: tempTypeIds.includes(type.id)
                       ? colors.primary[900]
                       : cardBg,
                     borderWidth: 1,
-                    borderColor: tempTypes.includes(type)
+                    borderColor: tempTypeIds.includes(type.id)
                       ? colors.primary[500]
                       : borderColor,
                   }}
@@ -202,12 +160,12 @@ const FoodTypeBottomSheet = memo(
                   <Text
                     className="font-vazir text-sm"
                     style={{
-                      color: tempTypes.includes(type)
+                      color: tempTypeIds.includes(type.id)
                         ? "white"
                         : colors.neutral[50],
                     }}
                   >
-                    {type}
+                    {type.name}
                   </Text>
                 </View>
               </Pressable>
@@ -235,40 +193,56 @@ const FoodTypeBottomSheet = memo(
 );
 
 const IngredientsBottomSheet = memo(
-  ({ visible, onClose, selectedItems, onConfirm }: any) => {
+  ({ visible, onClose, selectedIngredientIds, onConfirm, ingredients }: any) => {
     const { colors } = useTheme();
     const { isDark } = useTheme();
     const cardBg = isDark ? "#1C1C1E" : "#F5F5F5";
     const borderColor = isDark ? "#1C1C1E" : "#F5F5F5";
-    const [tempItems, setTempItems] = useState<string[]>([]);
+    const [tempIngredientIds, setTempIngredientIds] = useState<number[]>([]);
     const [search, setSearch] = useState("");
 
     useEffect(() => {
       if (visible) {
-        setTempItems([...selectedItems]);
+        setTempIngredientIds([...selectedIngredientIds]);
         setSearch("");
       }
-    }, [visible]);
+    }, [visible, selectedIngredientIds]);
 
-    const filteredIngredients = INGREDIENTS.filter((item) =>
-      item.includes(search),
-    );
+    const filteredIngredients = useMemo(() => {
+      if (!ingredients) return [];
+      return ingredients.filter((ing: any) =>
+        ing.name.includes(search),
+      );
+    }, [ingredients, search]);
 
-    const toggleItem = (item: string) => {
-      if (tempItems.includes(item)) {
-        setTempItems(tempItems.filter((i) => i !== item));
+    const toggleItem = (ingredientId: number) => {
+      if (tempIngredientIds.includes(ingredientId)) {
+        setTempIngredientIds(tempIngredientIds.filter((id) => id !== ingredientId));
       } else {
-        setTempItems([...tempItems, item]);
+        setTempIngredientIds([...tempIngredientIds, ingredientId]);
       }
     };
 
-    const removeItem = (item: string) => {
-      setTempItems(tempItems.filter((i) => i !== item));
+    const removeItem = (ingredientId: number) => {
+      setTempIngredientIds(tempIngredientIds.filter((id) => id !== ingredientId));
     };
 
     const handleConfirm = () => {
-      onConfirm(tempItems);
+      onConfirm(tempIngredientIds);
     };
+
+    if (!ingredients || ingredients.length === 0) {
+      return (
+        <BottomSheet visible={visible} onClose={onClose}>
+          <View className="p-6 items-center">
+            <ActivityIndicator size="large" color={colors.primary[500]} />
+            <Text className="font-vazir text-sm mt-4" style={{ color: colors.neutral[400] }}>
+              در حال بارگذاری...
+            </Text>
+          </View>
+        </BottomSheet>
+      );
+    }
 
     return (
       <BottomSheet visible={visible} onClose={onClose}>
@@ -299,45 +273,49 @@ const IngredientsBottomSheet = memo(
             />
           </View>
 
-          {tempItems.length > 0 && (
+          {tempIngredientIds.length > 0 && (
             <View className="flex-row-reverse flex-wrap gap-2 mb-4">
-              {tempItems.map((item) => (
-                <View
-                  key={item}
-                  className="flex-row items-center gap-1 px-3 py-1.5 rounded-md"
-                  style={{
-                    backgroundColor: colors.primary[900] + "20",
-                    borderWidth: 1,
-                    borderColor: colors.primary[500],
-                  }}
-                >
-                  <Text
-                    className="font-vazir text-sm"
-                    style={{ color: colors.primary[500] }}
+              {tempIngredientIds.map((id) => {
+                const ingredient = ingredients.find((ing: any) => ing.id === id);
+                if (!ingredient) return null;
+                return (
+                  <View
+                    key={id}
+                    className="flex-row items-center gap-1 px-3 py-1.5 rounded-md"
+                    style={{
+                      backgroundColor: colors.primary[900] + "20",
+                      borderWidth: 1,
+                      borderColor: colors.primary[500],
+                    }}
                   >
-                    {item}
-                  </Text>
-                  <Pressable onPress={() => removeItem(item)}>
-                    <Ionicons
-                      name="close-circle"
-                      size={18}
-                      color={colors.primary[500]}
-                    />
-                  </Pressable>
-                </View>
-              ))}
+                    <Text
+                      className="font-vazir text-sm"
+                      style={{ color: colors.primary[500] }}
+                    >
+                      {ingredient.name}
+                    </Text>
+                    <Pressable onPress={() => removeItem(id)}>
+                      <Ionicons
+                        name="close-circle"
+                        size={18}
+                        color={colors.primary[500]}
+                      />
+                    </Pressable>
+                  </View>
+                );
+              })}
             </View>
           )}
 
           <ScrollView style={{ maxHeight: 300 }}>
-            {filteredIngredients.map((item) => (
-              <Pressable key={item} onPress={() => toggleItem(item)}>
+            {filteredIngredients.map((ingredient: any) => (
+              <Pressable key={ingredient.id} onPress={() => toggleItem(ingredient.id)}>
                 <View
                   className="flex-row-reverse justify-between items-center p-4"
                   style={{
                     borderBottomWidth: 1,
                     borderBottomColor: borderColor,
-                    backgroundColor: tempItems.includes(item)
+                    backgroundColor: tempIngredientIds.includes(ingredient.id)
                       ? colors.primary[900] + "10"
                       : "transparent",
                   }}
@@ -345,15 +323,15 @@ const IngredientsBottomSheet = memo(
                   <Text
                     className="font-vazir text-base"
                     style={{
-                      color: tempItems.includes(item)
+                      color: tempIngredientIds.includes(ingredient.id)
                         ? colors.primary[500]
                         : colors.neutral[50],
                     }}
                   >
-                    {item}
+                    {ingredient.name}
                   </Text>
 
-                  {tempItems.includes(item) && (
+                  {tempIngredientIds.includes(ingredient.id) && (
                     <Ionicons
                       name="checkmark-circle"
                       size={24}
@@ -387,38 +365,54 @@ const IngredientsBottomSheet = memo(
 );
 
 const DishesBottomSheet = memo(
-  ({ visible, onClose, selectedItems, onConfirm }: any) => {
+  ({ visible, onClose, selectedDishIds, onConfirm, dishes }: any) => {
     const { colors } = useTheme();
     const { isDark } = useTheme();
     const cardBg = isDark ? "#1C1C1E" : "#F5F5F5";
     const borderColor = isDark ? "#1C1C1E" : "#F5F5F5";
-    const [tempItems, setTempItems] = useState<string[]>([]);
+    const [tempDishIds, setTempDishIds] = useState<number[]>([]);
     const [search, setSearch] = useState("");
 
     useEffect(() => {
       if (visible) {
-        setTempItems([...selectedItems]);
+        setTempDishIds([...selectedDishIds]);
         setSearch("");
       }
-    }, [visible]);
+    }, [visible, selectedDishIds]);
 
-    const filteredDishes = DISHES.filter((item) => item.includes(search));
+    const filteredDishes = useMemo(() => {
+      if (!dishes) return [];
+      return dishes.filter((dish: any) => dish.name.includes(search));
+    }, [dishes, search]);
 
-    const toggleItem = (item: string) => {
-      if (tempItems.includes(item)) {
-        setTempItems(tempItems.filter((i) => i !== item));
+    const toggleItem = (dishId: number) => {
+      if (tempDishIds.includes(dishId)) {
+        setTempDishIds(tempDishIds.filter((id) => id !== dishId));
       } else {
-        setTempItems([...tempItems, item]);
+        setTempDishIds([...tempDishIds, dishId]);
       }
     };
 
-    const removeItem = (item: string) => {
-      setTempItems(tempItems.filter((i) => i !== item));
+    const removeItem = (dishId: number) => {
+      setTempDishIds(tempDishIds.filter((id) => id !== dishId));
     };
 
     const handleConfirm = () => {
-      onConfirm(tempItems);
+      onConfirm(tempDishIds);
     };
+
+    if (!dishes || dishes.length === 0) {
+      return (
+        <BottomSheet visible={visible} onClose={onClose}>
+          <View className="p-6 items-center">
+            <ActivityIndicator size="large" color={colors.primary[500]} />
+            <Text className="font-vazir text-sm mt-4" style={{ color: colors.neutral[400] }}>
+              در حال بارگذاری...
+            </Text>
+          </View>
+        </BottomSheet>
+      );
+    }
 
     return (
       <BottomSheet visible={visible} onClose={onClose}>
@@ -449,45 +443,49 @@ const DishesBottomSheet = memo(
             />
           </View>
 
-          {tempItems.length > 0 && (
+          {tempDishIds.length > 0 && (
             <View className="flex-row flex-wrap gap-2 mb-4">
-              {tempItems.map((item) => (
-                <View
-                  key={item}
-                  className="flex-row items-center gap-1 px-3 py-1.5 rounded-md"
-                  style={{
-                    backgroundColor: colors.primary[900] + "20",
-                    borderWidth: 1,
-                    borderColor: colors.primary[500],
-                  }}
-                >
-                  <Text
-                    className="font-vazir text-sm"
-                    style={{ color: colors.primary[500] }}
+              {tempDishIds.map((id) => {
+                const dish = dishes.find((d: any) => d.id === id);
+                if (!dish) return null;
+                return (
+                  <View
+                    key={id}
+                    className="flex-row items-center gap-1 px-3 py-1.5 rounded-md"
+                    style={{
+                      backgroundColor: colors.primary[900] + "20",
+                      borderWidth: 1,
+                      borderColor: colors.primary[500],
+                    }}
                   >
-                    {item}
-                  </Text>
-                  <Pressable onPress={() => removeItem(item)}>
-                    <Ionicons
-                      name="close-circle"
-                      size={18}
-                      color={colors.primary[500]}
-                    />
-                  </Pressable>
-                </View>
-              ))}
+                    <Text
+                      className="font-vazir text-sm"
+                      style={{ color: colors.primary[500] }}
+                    >
+                      {dish.name}
+                    </Text>
+                    <Pressable onPress={() => removeItem(id)}>
+                      <Ionicons
+                        name="close-circle"
+                        size={18}
+                        color={colors.primary[500]}
+                      />
+                    </Pressable>
+                  </View>
+                );
+              })}
             </View>
           )}
 
           <ScrollView style={{ maxHeight: 300 }}>
-            {filteredDishes.map((item) => (
-              <Pressable key={item} onPress={() => toggleItem(item)}>
+            {filteredDishes.map((dish: any) => (
+              <Pressable key={dish.id} onPress={() => toggleItem(dish.id)}>
                 <View
                   className="flex-row-reverse justify-between items-center p-4"
                   style={{
                     borderBottomWidth: 1,
                     borderBottomColor: borderColor,
-                    backgroundColor: tempItems.includes(item)
+                    backgroundColor: tempDishIds.includes(dish.id)
                       ? colors.primary[900] + "10"
                       : "transparent",
                   }}
@@ -495,15 +493,15 @@ const DishesBottomSheet = memo(
                   <Text
                     className="font-vazir text-base"
                     style={{
-                      color: tempItems.includes(item)
+                      color: tempDishIds.includes(dish.id)
                         ? colors.primary[500]
                         : colors.neutral[50],
                     }}
                   >
-                    {item}
+                    {dish.name}
                   </Text>
 
-                  {tempItems.includes(item) && (
+                  {tempDishIds.includes(dish.id) && (
                     <Ionicons
                       name="checkmark-circle"
                       size={24}
@@ -617,21 +615,24 @@ const TimeBottomSheet = memo(
 const Personalize = () => {
   const { colors, isDark } = useTheme();
   const [hasAnimated, setHasAnimated] = useState(false);
+  const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
 
-  const [selectedTone, setSelectedTone] = useState("صمیمی");
-  const [selectedFoodTypes, setSelectedFoodTypes] = useState<string[]>([
-    "غذای اصلی",
-  ]);
-  const [availableIngredients, setAvailableIngredients] = useState<string[]>([
-    "برنج",
-    "مرغ",
-    "گوجه",
-  ]);
-  const [favoriteDishes, setFavoriteDishes] = useState<string[]>([
-    "قورمه سبزی",
-    "زرشک پلو با مرغ",
-  ]);
-  const [cookingTime, setCookingTime] = useState(30);
+  // API Queries
+  const { data: personalizationData, isLoading: isLoadingPersonalization } = useGetPersonalizationQuery(undefined, {
+    skip: !isAuthenticated,
+  });
+  const { data: ingredientsData, isLoading: isLoadingIngredients } = useGetIngredientsQuery();
+  const { data: dishesData, isLoading: isLoadingDishes } = useGetDishesQuery();
+  const { data: foodTypesData, isLoading: isLoadingFoodTypes } = useGetFoodTypesQuery();
+  const { data: tonesData, isLoading: isLoadingTones } = useGetTonesQuery();
+  const [updatePersonalization, { isLoading: isUpdating }] = useUpdatePersonalizationMutation();
+
+  // State
+  const [selectedToneId, setSelectedToneId] = useState<number | null>(null);
+  const [selectedFoodTypeIds, setSelectedFoodTypeIds] = useState<number[]>([]);
+  const [availableIngredientIds, setAvailableIngredientIds] = useState<number[]>([]);
+  const [favoriteDishIds, setFavoriteDishIds] = useState<number[]>([]);
+  const [cookingTime, setCookingTime] = useState<number | null>(null);
 
   const [toneSheet, setToneSheet] = useState(false);
   const [foodTypeSheet, setFoodTypeSheet] = useState(false);
@@ -639,9 +640,73 @@ const Personalize = () => {
   const [dishesSheet, setDishesSheet] = useState(false);
   const [timeSheet, setTimeSheet] = useState(false);
 
+  // Load personalization settings from API
+  useEffect(() => {
+    if (personalizationData) {
+      setSelectedToneId(personalizationData.tone_id);
+      setSelectedFoodTypeIds(personalizationData.food_type_ids || []);
+      setAvailableIngredientIds(personalizationData.available_ingredient_ids || []);
+      setFavoriteDishIds(personalizationData.favorite_dish_ids || []);
+      setCookingTime(personalizationData.cooking_time);
+    }
+  }, [personalizationData]);
+
   useEffect(() => {
     setHasAnimated(true);
   }, []);
+
+  // Helper functions to get names from IDs
+  const getToneName = useCallback((toneId: number | null) => {
+    if (!toneId || !tonesData?.tones) return "انتخاب نشده";
+    const tone = tonesData.tones.find((t) => t.id === toneId);
+    return tone?.name || "انتخاب نشده";
+  }, [tonesData]);
+
+  const getFoodTypeNames = useCallback((ids: number[]) => {
+    if (!foodTypesData?.food_types) return [];
+    return ids.map((id) => {
+      const type = foodTypesData.food_types.find((t) => t.id === id);
+      return type?.name || "";
+    }).filter(Boolean);
+  }, [foodTypesData]);
+
+  const getIngredientNames = useCallback((ids: number[]) => {
+    if (!ingredientsData?.ingredients) return [];
+    return ids.map((id) => {
+      const ingredient = ingredientsData.ingredients.find((i) => i.id === id);
+      return ingredient?.name || "";
+    }).filter(Boolean);
+  }, [ingredientsData]);
+
+  const getDishNames = useCallback((ids: number[]) => {
+    if (!dishesData?.dishes) return [];
+    return ids.map((id) => {
+      const dish = dishesData.dishes.find((d) => d.id === id);
+      return dish?.name || "";
+    }).filter(Boolean);
+  }, [dishesData]);
+
+  // Save changes to API
+  const handleSave = useCallback(async () => {
+    if (!isAuthenticated) {
+      Alert.alert("خطا", "لطفا ابتدا وارد شوید");
+      return;
+    }
+
+    try {
+      await updatePersonalization({
+        tone_id: selectedToneId || undefined,
+        food_type_ids: selectedFoodTypeIds.length > 0 ? selectedFoodTypeIds : undefined,
+        available_ingredient_ids: availableIngredientIds.length > 0 ? availableIngredientIds : undefined,
+        favorite_dish_ids: favoriteDishIds.length > 0 ? favoriteDishIds : undefined,
+        cooking_time: cookingTime || undefined,
+      }).unwrap();
+      Alert.alert("موفق", "تنظیمات با موفقیت ذخیره شد");
+    } catch (error: any) {
+      console.error("Error updating personalization:", error);
+      Alert.alert("خطا", error?.data?.message || "ذخیره تنظیمات ناموفق بود");
+    }
+  }, [isAuthenticated, updatePersonalization, selectedToneId, selectedFoodTypeIds, availableIngredientIds, favoriteDishIds, cookingTime]);
 
   const cardBg = isDark ? "#1C1C1E" : "#F5F5F5";
   const borderColor = isDark ? colors.neutral[800] : colors.neutral[200];
@@ -678,36 +743,64 @@ const Personalize = () => {
 
   const SelectedItems = ({ items }: { items: string[] }) => (
     <View className="flex-row justify-end items-end flex-wrap gap-2 mt-2 w-80">
-      {items.map((item, index) => (
-        <MotiView
-          key={item}
-          from={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ type: "timing", duration: 300, delay: index * 50 }}
-          className="px-3 py-1.5 rounded-md"
-          style={{
-            backgroundColor: colors.primary[900] + "20",
-            borderWidth: 1,
-            borderColor: colors.primary[500],
-          }}
-        >
-          <Text
-            className="font-vazir text-sm"
-            style={{ color: colors.primary[500] }}
+      {items.length === 0 ? (
+        <Text className="font-vazir text-xs" style={{ color: colors.neutral[400] }}>
+          انتخاب نشده
+        </Text>
+      ) : (
+        items.map((item, index) => (
+          <MotiView
+            key={item}
+            from={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ type: "timing", duration: 300, delay: index * 50 }}
+            className="px-3 py-1.5 rounded-md"
+            style={{
+              backgroundColor: colors.primary[900] + "20",
+              borderWidth: 1,
+              borderColor: colors.primary[500],
+            }}
           >
-            {item}
-          </Text>
-        </MotiView>
-      ))}
+            <Text
+              className="font-vazir text-sm"
+              style={{ color: colors.primary[500] }}
+            >
+              {item}
+            </Text>
+          </MotiView>
+        ))
+      )}
     </View>
   );
+
+  const isLoading = isLoadingPersonalization || isLoadingIngredients || isLoadingDishes || isLoadingFoodTypes || isLoadingTones;
+
+  if (!isAuthenticated) {
+    return (
+      <SafeAreaView className="flex-1" style={{ backgroundColor: colors.background }}>
+        <View className="flex-1 justify-center items-center px-4">
+          <Text className="font-vazir text-lg text-center" style={{ color: colors.neutral[50] }}>
+            لطفا ابتدا وارد شوید
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView
       className="flex-1"
       style={{ backgroundColor: colors.background }}
     >
-      <ScrollView className="flex-1 px-4" showsVerticalScrollIndicator={false}>
+      {isLoading ? (
+        <View className="flex-1 justify-center items-center">
+          <ActivityIndicator size="large" color={colors.primary[500]} />
+          <Text className="font-vazir text-sm mt-4" style={{ color: colors.neutral[400] }}>
+            در حال بارگذاری...
+          </Text>
+        </View>
+      ) : (
+        <ScrollView className="flex-1 px-4" showsVerticalScrollIndicator={false}>
         <MotiView
           from={hasAnimated ? undefined : { opacity: 0, translateY: -20 }}
           animate={{ opacity: 1, translateY: 0 }}
@@ -745,7 +838,7 @@ const Personalize = () => {
                   className="font-vazir text-xs mt-1"
                   style={{ color: colors.neutral[400] }}
                 >
-                  {selectedTone}
+                  {getToneName(selectedToneId)}
                 </Text>
               </View>
               <Ionicons
@@ -780,7 +873,7 @@ const Personalize = () => {
                 >
                   نوع غذاهای مورد علاقه
                 </Text>
-                <SelectedItems items={selectedFoodTypes} />
+                <SelectedItems items={getFoodTypeNames(selectedFoodTypeIds)} />
               </View>
               <Ionicons
                 name="chevron-back"
@@ -801,7 +894,7 @@ const Personalize = () => {
                 >
                   مواد اولیه در دسترس من
                 </Text>
-                <SelectedItems items={availableIngredients} />
+                <SelectedItems items={getIngredientNames(availableIngredientIds)} />
               </View>
               <Ionicons
                 name="chevron-back"
@@ -822,7 +915,7 @@ const Personalize = () => {
                 >
                   غذاهای مورد علاقه من
                 </Text>
-                <SelectedItems items={favoriteDishes} />
+                <SelectedItems items={getDishNames(favoriteDishIds)} />
               </View>
               <Ionicons
                 name="chevron-back"
@@ -847,9 +940,11 @@ const Personalize = () => {
                   className="font-vazir text-xs mt-1"
                   style={{ color: colors.neutral[400] }}
                 >
-                  {Math.floor(cookingTime / 60) > 0
-                    ? `${toPersianNumber(Math.floor(cookingTime / 60))} ساعت و ${toPersianNumber(cookingTime % 60)} دقیقه`
-                    : `${toPersianNumber(cookingTime)} دقیقه`}
+                  {cookingTime
+                    ? Math.floor(cookingTime / 60) > 0
+                      ? `${toPersianNumber(Math.floor(cookingTime / 60))} ساعت و ${toPersianNumber(cookingTime % 60)} دقیقه`
+                      : `${toPersianNumber(cookingTime)} دقیقه`
+                    : "انتخاب نشده"}
                 </Text>
               </View>
               <Ionicons
@@ -860,55 +955,83 @@ const Personalize = () => {
             </View>
           </DataRow>
         </DataBox>
+
+        <View className="mb-8 mt-4">
+          <Button
+            title={isUpdating ? "در حال ذخیره..." : "ذخیره تنظیمات"}
+            style={{
+              backgroundColor: colors.primary[900],
+              borderRadius: 8,
+            }}
+            textStyle={{
+              color: "white",
+              fontSize: 16,
+              fontFamily: "VazirMedium",
+            }}
+            className="py-3"
+            onPress={handleSave}
+            disabled={isUpdating}
+          />
+        </View>
       </ScrollView>
+      )}
 
       <ToneBottomSheet
         visible={toneSheet}
         onClose={() => setToneSheet(false)}
-        selectedTone={selectedTone}
-        onSelect={(tone: string) => {
-          setSelectedTone(tone);
+        selectedToneId={selectedToneId}
+        onSelect={(toneId: number) => {
+          setSelectedToneId(toneId);
           setToneSheet(false);
+          handleSave();
         }}
+        tones={tonesData?.tones}
       />
 
       <FoodTypeBottomSheet
         visible={foodTypeSheet}
         onClose={() => setFoodTypeSheet(false)}
-        selectedTypes={selectedFoodTypes}
-        onConfirm={(types: string[]) => {
-          setSelectedFoodTypes(types);
+        selectedTypeIds={selectedFoodTypeIds}
+        onConfirm={(typeIds: number[]) => {
+          setSelectedFoodTypeIds(typeIds);
           setFoodTypeSheet(false);
+          handleSave();
         }}
+        foodTypes={foodTypesData?.food_types}
       />
 
       <IngredientsBottomSheet
         visible={ingredientsSheet}
         onClose={() => setIngredientsSheet(false)}
-        selectedItems={availableIngredients}
-        onConfirm={(items: string[]) => {
-          setAvailableIngredients(items);
+        selectedIngredientIds={availableIngredientIds}
+        onConfirm={(ingredientIds: number[]) => {
+          setAvailableIngredientIds(ingredientIds);
           setIngredientsSheet(false);
+          handleSave();
         }}
+        ingredients={ingredientsData?.ingredients}
       />
 
       <DishesBottomSheet
         visible={dishesSheet}
         onClose={() => setDishesSheet(false)}
-        selectedItems={favoriteDishes}
-        onConfirm={(items: string[]) => {
-          setFavoriteDishes(items);
+        selectedDishIds={favoriteDishIds}
+        onConfirm={(dishIds: number[]) => {
+          setFavoriteDishIds(dishIds);
           setDishesSheet(false);
+          handleSave();
         }}
+        dishes={dishesData?.dishes}
       />
 
       <TimeBottomSheet
         visible={timeSheet}
         onClose={() => setTimeSheet(false)}
-        initialTime={cookingTime}
+        initialTime={cookingTime || 0}
         onConfirm={(time: number) => {
           setCookingTime(time);
           setTimeSheet(false);
+          handleSave();
         }}
       />
     </SafeAreaView>

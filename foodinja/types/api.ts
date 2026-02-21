@@ -206,3 +206,95 @@ export const truncateTitle = (title: string, maxLength: number = 50): string => 
   if (title.length <= maxLength) return title;
   return title.substring(0, maxLength - 3) + '...';
 };
+
+
+export interface PersonalizationSettings {
+  tone_id: number | null;
+  food_type_ids: number[];
+  available_ingredient_ids: number[];
+  favorite_dish_ids: number[];
+  cooking_time: number | null;
+}
+
+export interface UpdatePersonalizationRequest {
+  tone_id?: number;
+  food_type_ids?: number[];
+  available_ingredient_ids?: number[];
+  favorite_dish_ids?: number[];
+  cooking_time?: number;
+}
+
+
+export interface Ingredient {
+  id: number;
+  name: string;
+}
+
+export interface Dish {
+  id: number;
+  name: string;
+}
+
+export interface FoodType {
+  id: number;
+  name: string;
+}
+
+export interface Tone {
+  id: number;
+  name: string;
+}
+
+export interface IngredientsResponse {
+  ingredients: Ingredient[];
+}
+
+export interface DishesResponse {
+  dishes: Dish[];
+}
+
+export interface FoodTypesResponse {
+  food_types: FoodType[];
+}
+
+export interface TonesResponse {
+  tones: Tone[];
+}
+
+
+export interface GuestChatRequest {
+  query: string;
+  device_id: string;
+  session_id?: string;
+}
+
+export interface GuestChatRemaining {
+  ip: number;
+  device: number;
+  session: number;
+}
+
+export interface GuestChatResponse {
+  response: string;
+  remaining: GuestChatRemaining;
+}
+
+export interface GuestLimitStatus {
+  used: number;
+  limit: number;
+  remaining: number;
+}
+
+export interface GuestStatusResponse {
+  ip: GuestLimitStatus;
+  device: GuestLimitStatus;
+  session: GuestLimitStatus;
+}
+
+export interface GuestLimitError {
+  statusCode: 429;
+  message: string;
+  error: 'ip_limit' | 'device_limit' | 'session_limit';
+  limit: number;
+  used: number;
+}
