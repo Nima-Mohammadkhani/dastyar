@@ -9,39 +9,50 @@ import {
   ScrollView,
   Alert,
   ActivityIndicator,
+  Modal,
 } from "react-native";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { MotiView } from "moti";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "@/constants/theme";
 import Input from "@/components/ui/Input";
 import Button from "@/components/ui/Button";
 import { toPersianNumber } from "@/utils/converter";
-import * as WebBrowser from "expo-web-browser";
-import * as Linking from "expo-linking";
-import { useDispatch } from "react-redux";
+import { WebView } from "react-native-webview";
+import { useAuthDeepLink } from "@/hooks/useAuthDeepLink";
 import { useRouter } from "expo-router";
-import { setAuthTokens, setUserData } from "@/redux/authSlice";
-import { useGetUserInfoQuery } from "@/redux/service/app";
 
 type Step = "email" | "otp";
 
-WebBrowser.maybeCompleteAuthSession();
-
 const Login = () => {
   const { colors, isDark } = useTheme();
-  const dispatch = useDispatch();
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState<Step>("email");
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState(["", "", "", "", ""]);
   const [timer, setTimer] = useState(120);
   const [hasAnimated, setHasAnimated] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [showWebView, setShowWebView] = useState(false);
+  const [webViewLoading, setWebViewLoading] = useState(true);
+  const webViewRef = useRef<WebView>(null);
 
-  const { refetch: refetchUserInfo } = useGetUserInfoQuery(undefined, {
-    skip: true,
-  });
+  // استفاده از hook برای مدیریت OAuth deep linking
+  const { handleWebViewRedirect, loading: authLoading } = useAuthDeepLink(
+    () => {
+      // موفقیت: بستن WebView و هدایت به صفحه اصلی
+      console.log("احراز هویت موفق بود");
+      setShowWebView(false);
+    },
+    (error) => {
+      // خطا: نمایش پیام و بستن WebView
+      console.error("خطا در احراز هویت:", error);
+      Alert.alert(
+        "خطا",
+        error.message || "احراز هویت ناموفق بود. لطفا دوباره تلاش کنید."
+      );
+      setShowWebView(false);
+    }
+  );
 
   const cardBg = isDark ? "#1C1C1E" : "#F5F5F5";
   const borderColor = isDark ? colors.neutral[800] : colors.neutral[200];
@@ -89,108 +100,52 @@ const Login = () => {
     }
   };
 
-  useEffect(() => {
-    const handleDeepLink = async (event: { url: string }) => {
-      const { url } = event;
+  // باز کردن WebView برای لاگین با گوگل
+  const handleGoogleLogin = () => {
+    setShowWebView(true);
+  };
 
-      if (url.includes("oauth2/redirect")) {
-        try {
-          const parsedUrl = Linking.parse(url);
-          const accessToken = parsedUrl.queryParams?.access_token as string;
-          const refreshToken = parsedUrl.queryParams?.refresh_token as string;
+  // بستن WebView
+  const handleCloseWebView = () => {
+    setShowWebView(false);
+    setWebViewLoading(true);
+  };
 
-          if (accessToken && refreshToken) {
-            dispatch(
-              setAuthTokens({
-                access_token: accessToken,
-                refresh_token: refreshToken,
-              }),
-            );
+  // مدیریت درخواست‌های WebView - intercept کردن redirect
+  const handleShouldStartLoadWithRequest = async (request: { url: string }) => {
+    const { url } = request;
 
-            try {
-              const userInfoResult = await refetchUserInfo();
-              if (userInfoResult.data) {
-                dispatch(setUserData(userInfoResult.data));
-              }
-            } catch (error) {
-              console.error("Failed to fetch user info:", error);
-            }
+    // بررسی اگر URL مربوط به OAuth redirect است
+    if (url.startsWith("foodinja://auth")) {
+      console.log("دریافت redirect OAuth:", url);
 
-            router.replace("/(drawer)");
-          }
-        } catch (error) {
-          console.error("OAuth redirect error:", error);
-          Alert.alert("خطا", "خطا در احراز هویت. لطفا دوباره تلاش کنید.");
-        }
+      // استفاده از hook برای پردازش redirect
+      const handled = await handleWebViewRedirect(url);
+
+      if (handled) {
+        // URL پردازش شد، WebView را متوقف کن
+        return false;
       }
-    };
 
-    const subscription = Linking.addEventListener("url", handleDeepLink);
+      // اگر پردازش نشد، WebView را متوقف کن (نباید اتفاق بیفتد)
+      return false;
+    }
 
-    Linking.getInitialURL().then((url) => {
-      if (url) {
-        handleDeepLink({ url });
-      }
-    });
+    // اجازه بارگذاری سایر URLها
+    return true;
+  };
 
-    return () => {
-      subscription.remove();
-    };
-  }, [dispatch, router, refetchUserInfo]);
+  // مدیریت خطاهای WebView
+  const handleWebViewError = (syntheticEvent: any) => {
+    const { nativeEvent } = syntheticEvent;
+    console.error("خطای WebView:", nativeEvent);
 
-  const handleGoogleLogin = async () => {
-    try {
-      setIsLoading(true);
-
-      const loginUrl = "https://foodinja.ir/api/users/login";
-      const redirectUrl = Linking.createURL("(drawer)/", {
-        scheme: "foodinja",
-      });
-
-      const result = await WebBrowser.openAuthSessionAsync(
-        loginUrl,
-        redirectUrl,
-      );
-
-      if (result.type === "success" && result.url) {
-        const parsedUrl = Linking.parse(result.url);
-        const accessToken = parsedUrl.queryParams?.access_token as string;
-        const refreshToken = parsedUrl.queryParams?.refresh_token as string;
-
-        if (accessToken && refreshToken) {
-          dispatch(
-            setAuthTokens({
-              access_token: accessToken,
-              refresh_token: refreshToken,
-            }),
-          );
-
-          try {
-            const userInfoResult = await refetchUserInfo();
-            if (userInfoResult.data) {
-              dispatch(setUserData(userInfoResult.data));
-            }
-          } catch (error) {
-            console.error("Failed to fetch user info:", error);
-          }
-
-          router.replace("/(drawer)");
-        } else {
-          Alert.alert("خطا", "احراز هویت ناموفق بود. لطفا دوباره تلاش کنید.");
-        }
-      } else if (result.type === "cancel") {
-        // User cancelled
-      } else {
-        Alert.alert("خطا", "خطا در باز کردن صفحه ورود. لطفا دوباره تلاش کنید.");
-      }
-    } catch (error) {
-      console.error("Google login error:", error);
+    // فقط اگر خطای navigation نباشد (که برای deep link طبیعی است)
+    if (!nativeEvent.url?.startsWith("foodinja://")) {
       Alert.alert(
         "خطا",
-        "خطا در اتصال به سرور. لطفا اتصال اینترنت خود را بررسی کنید.",
+        "خطا در بارگذاری صفحه ورود. لطفا اتصال اینترنت خود را بررسی کنید."
       );
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -309,7 +264,7 @@ const Login = () => {
                 <Pressable
                   onPress={handleGoogleLogin}
                   className="mb-3"
-                  disabled={isLoading}
+                  disabled={showWebView || authLoading}
                 >
                   <View
                     className="flex-row-reverse items-center justify-between p-4 rounded-md"
@@ -317,11 +272,11 @@ const Login = () => {
                       backgroundColor: cardBg,
                       borderWidth: 1,
                       borderColor: borderColor,
-                      opacity: isLoading ? 0.6 : 1,
+                      opacity: showWebView || authLoading ? 0.6 : 1,
                     }}
                   >
                     <View className="flex-row items-center gap-3">
-                      {isLoading ? (
+                      {authLoading ? (
                         <ActivityIndicator
                           size="small"
                           color={colors.primary[500]}
@@ -336,10 +291,10 @@ const Login = () => {
                         className="font-vazir text-base"
                         style={{ color: colors.neutral[50] }}
                       >
-                        {isLoading ? "در حال اتصال..." : "ادامه با گوگل"}
+                        {authLoading ? "در حال احراز هویت..." : "ادامه با گوگل"}
                       </Text>
                     </View>
-                    {!isLoading && (
+                    {!authLoading && (
                       <Ionicons
                         name="chevron-back"
                         size={20}
@@ -499,6 +454,97 @@ const Login = () => {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      {/* WebView Modal برای OAuth */}
+      <Modal
+        visible={showWebView}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={handleCloseWebView}
+      >
+        <View style={{ flex: 1, backgroundColor: colors.background }}>
+          {/* Header با دکمه بستن */}
+          <View
+            style={{
+              flexDirection: "row",
+              justifyContent: "space-between",
+              alignItems: "center",
+              padding: 16,
+              borderBottomWidth: 1,
+              borderBottomColor: borderColor,
+            }}
+          >
+            <Text
+              style={{
+                fontSize: 18,
+                fontWeight: "600",
+                color: colors.neutral[50],
+                fontFamily: "VazirMedium",
+              }}
+            >
+              ورود با گوگل
+            </Text>
+            <Pressable onPress={handleCloseWebView}>
+              <Ionicons name="close" size={24} color={colors.neutral[50]} />
+            </Pressable>
+          </View>
+
+          {/* WebView */}
+          <WebView
+            ref={webViewRef}
+            source={{ uri: "https://foodinja.ir/api/users/login" }}
+            onShouldStartLoadWithRequest={handleShouldStartLoadWithRequest}
+            onLoadStart={() => setWebViewLoading(true)}
+            onLoadEnd={() => setWebViewLoading(false)}
+            onError={handleWebViewError}
+            startInLoadingState={true}
+            javaScriptEnabled={true}
+            domStorageEnabled={true}
+            allowsBackForwardNavigationGestures={false}
+            style={{ flex: 1 }}
+          />
+
+          {/* Loading overlay */}
+          {(webViewLoading || authLoading) && (
+            <View
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                backgroundColor: "rgba(0, 0, 0, 0.3)",
+                justifyContent: "center",
+                alignItems: "center",
+              }}
+            >
+              <View
+                style={{
+                  backgroundColor: colors.background,
+                  padding: 20,
+                  borderRadius: 10,
+                  alignItems: "center",
+                }}
+              >
+                <ActivityIndicator
+                  size="large"
+                  color={colors.primary[500]}
+                />
+                <Text
+                  style={{
+                    marginTop: 10,
+                    color: colors.neutral[50],
+                    fontSize: 14,
+                    fontFamily: "VazirMedium",
+                  }}
+                >
+                  {authLoading ? "در حال احراز هویت..." : "در حال بارگذاری..."}
+                </Text>
+              </View>
+            </View>
+          )}
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };

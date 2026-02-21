@@ -69,6 +69,16 @@ export const App = rtkInstance.injectEndpoints({
         method: "GET",
       }),
     }),
+    exchangeCode: builder.mutation<
+      { access_token: string; refresh_token: string },
+      { code: string }
+    >({
+      query: (body) => ({
+        url: "exchange-code",
+        method: "POST",
+        body,
+      }),
+    }),
   }),
   overrideExisting: false,
 });
@@ -83,4 +93,5 @@ export const {
   useRestoreConversationMutation,
   useGetDeletedConversationsQuery,
   useGetTokenStatusQuery,
+  useExchangeCodeMutation,
 } = App;

@@ -19,6 +19,8 @@ import { store } from "@/redux/store";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { rehydrateAuth } from "@/redux/authSlice";
 import type { UserInfo } from "@/types/api";
+import { useAuthDeepLink } from "@/hooks/useAuthDeepLink";
+import { secureStorage } from "@/utils/secureStorage";
 
 export const unstable_settings = {
   anchor: "(tabs)",
@@ -30,6 +32,22 @@ function AuthRehydrator() {
   useEffect(() => {
     const rehydrate = async () => {
       try {
+        const [secureToken, secureRefreshToken, secureUserData] = await Promise.all([
+          secureStorage.getToken(),
+          secureStorage.getRefreshToken(),
+          secureStorage.getUserData(),
+        ]);
+
+        if (secureToken || secureRefreshToken || secureUserData) {
+          const userData = secureUserData ? JSON.parse(secureUserData) as UserInfo : null;
+          dispatch(rehydrateAuth({
+            token: secureToken || null,
+            refreshToken: secureRefreshToken || null,
+            userData,
+          }));
+          return;
+        }
+
         const [token, refreshToken, userDataStr] = await Promise.all([
           AsyncStorage.getItem('token'),
           AsyncStorage.getItem('refreshToken'),
@@ -61,6 +79,15 @@ function RootLayoutContent() {
   const [fontsLoaded] = useFonts({
     VazirMedium: require("../assets/font/Vazir-Medium.ttf"),
   });
+
+  const { loading: authLoading, error: authError } = useAuthDeepLink(
+    () => {
+      console.log('Authentication successful via deep link');
+    },
+    (error) => {
+      console.error('Authentication failed via deep link:', error);
+    }
+  );
 
   if (!fontsLoaded) {
     return (

@@ -10,7 +10,9 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "icon": "./assets/images/logo/appIcon.png"
+      "icon": "./assets/images/logo/appIcon.png",
+      "bundleIdentifier": "com.nimamohammadkhani.foodinja",
+      "associatedDomains": []
     },
     "android": {
       "adaptiveIcon": {
@@ -19,7 +21,20 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.nimamohammadkhani.foodinja"
+      "package": "com.nimamohammadkhani.foodinja",
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "foodinja",
+              "host": "*"
+            }
+          ],
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
+      ]
     },
     "web": {
       "output": "static",
