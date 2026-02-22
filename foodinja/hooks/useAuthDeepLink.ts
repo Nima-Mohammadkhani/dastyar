@@ -33,45 +33,48 @@ export function useAuthDeepLink(
   const initialUrlHandledRef = useRef<Set<string>>(new Set());
   const isMountedRef = useRef(true);
 
-  const parseAuthCode = useCallback((url: string): string | null => {
+  const parseAuthCode = useCallback((url: string): { code: string | null; error: string | null } => {
     try {
       const parsed = Linking.parse(url);
       
       if (parsed.scheme !== 'foodinja') {
-        return null;
+        return { code: null, error: null };
       }
       
       if (parsed.path !== 'auth') {
-        return null;
+        return { code: null, error: null };
+      }
+      
+      const error = parsed.queryParams?.error;
+      if (error && typeof error === 'string') {
+        return { code: null, error: error.trim() };
       }
       
       const code = parsed.queryParams?.code;
+      const codeStr = Array.isArray(code) ? code[0] : code;
       
       if (
-        !code ||
-        typeof code !== 'string' ||
-        code.trim().length < 10
+        !codeStr ||
+        typeof codeStr !== 'string' ||
+        codeStr.trim().length < 10
       ) {
-        console.warn('Invalid code format or too short');
-        return null;
+        return { code: null, error: null };
       }
       
-      return code.trim();
+      return { code: codeStr.trim(), error: null };
     } catch (err) {
       console.error('Failed to parse URL:', err);
-      return null;
+      return { code: null, error: null };
     }
   }, []);
 
   const handleCodeExchange = useCallback(
     async (code: string): Promise<void> => {
       if (processedCodesRef.current.has(code)) {
-        console.log('Code already processed, skipping:', code.substring(0, 10));
         return;
       }
 
       if (processingRef.current) {
-        console.log('Already processing a code, skipping duplicate');
         return;
       }
 
@@ -120,10 +123,15 @@ export function useAuthDeepLink(
 
         try {
           router.dismissAll();
+          await new Promise(resolve => setTimeout(resolve, 100));
           router.replace('/(drawer)');
         } catch (navError) {
           console.error('Navigation error:', navError);
-          router.replace('/(drawer)');
+          try {
+            router.replace('/(drawer)');
+          } catch (fallbackError) {
+            console.error('Fallback navigation error:', fallbackError);
+          }
         }
 
         onSuccess?.();
@@ -156,13 +164,31 @@ export function useAuthDeepLink(
       if (!url) return;
 
       if (isInitialUrl && initialUrlHandledRef.current.has(url)) {
-        console.log('Initial URL already processed, skipping');
         return;
       }
 
-      console.log('Received deep link:', url);
-
-      const code = parseAuthCode(url);
+      const { code, error } = parseAuthCode(url);
+      
+      if (error) {
+        const errorMessages: Record<string, string> = {
+          'oauth_failed': 'احراز هویت با گوگل ناموفق بود',
+          'no_token': 'توکن دریافت نشد',
+          'no_email': 'ایمیل دریافت نشد',
+          'server_error': 'خطای سرور رخ داد',
+        };
+        
+        const errorMessage = errorMessages[error] || `خطا در احراز هویت: ${error}`;
+        const authError = new Error(errorMessage);
+        
+        if (isMountedRef.current) {
+          setError(authError);
+          setLoading(false);
+        }
+        
+        onError?.(authError);
+        return;
+      }
+      
       if (!code) {
         return;
       }
@@ -173,7 +199,7 @@ export function useAuthDeepLink(
 
       await handleCodeExchange(code);
     },
-    [parseAuthCode, handleCodeExchange]
+    [parseAuthCode, handleCodeExchange, onError]
   );
 
   const handleWebViewRedirect = useCallback(
@@ -182,16 +208,36 @@ export function useAuthDeepLink(
         return false; 
       }
 
-      const code = parseAuthCode(url);
+      const { code, error } = parseAuthCode(url);
+      
+      if (error) {
+        const errorMessages: Record<string, string> = {
+          'oauth_failed': 'احراز هویت با گوگل ناموفق بود',
+          'no_token': 'توکن دریافت نشد',
+          'no_email': 'ایمیل دریافت نشد',
+          'server_error': 'خطای سرور رخ داد',
+        };
+        
+        const errorMessage = errorMessages[error] || `خطا در احراز هویت: ${error}`;
+        const authError = new Error(errorMessage);
+        
+        if (isMountedRef.current) {
+          setError(authError);
+          setLoading(false);
+        }
+        
+        onError?.(authError);
+        return true;
+      }
+      
       if (!code) {
-        console.warn('Invalid auth URL in WebView:', url);
         return false;
       }
 
       await handleCodeExchange(code);
       return true;
     },
-    [parseAuthCode, handleCodeExchange]
+    [parseAuthCode, handleCodeExchange, onError]
   );
 
   useEffect(() => {

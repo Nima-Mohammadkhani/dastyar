@@ -21,6 +21,7 @@ import { toPersianNumber } from "@/utils/converter";
 import { WebView } from "react-native-webview";
 import { useAuthDeepLink } from "@/hooks/useAuthDeepLink";
 import { useRouter } from "expo-router";
+import * as WebBrowser from "expo-web-browser";
 
 type Step = "email" | "otp";
 
@@ -36,15 +37,19 @@ const Login = () => {
   const [webViewLoading, setWebViewLoading] = useState(true);
   const webViewRef = useRef<WebView>(null);
 
-  // استفاده از hook برای مدیریت OAuth deep linking
+  const getUserAgent = () => {
+    if (Platform.OS === 'ios') {
+      return 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.0 Mobile/15E148 Safari/604.1';
+    } else {
+      return 'Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36';
+    }
+  };
+
   const { handleWebViewRedirect, loading: authLoading } = useAuthDeepLink(
     () => {
-      // موفقیت: بستن WebView و هدایت به صفحه اصلی
-      console.log("احراز هویت موفق بود");
       setShowWebView(false);
     },
     (error) => {
-      // خطا: نمایش پیام و بستن WebView
       console.error("خطا در احراز هویت:", error);
       Alert.alert(
         "خطا",
@@ -90,57 +95,54 @@ const Login = () => {
     setOtp(newOtp);
 
     if (value && index < 4) {
-      // Auto-focus next input if needed
     }
   };
 
   const handleOtpSubmit = () => {
     if (otp.every((digit) => digit !== "")) {
-      // Handle OTP submission
     }
   };
 
-  // باز کردن WebView برای لاگین با گوگل
-  const handleGoogleLogin = () => {
-    setShowWebView(true);
+  const handleGoogleLogin = async () => {
+    try {
+      await WebBrowser.openAuthSessionAsync(
+        "https://foodinja.ir/api/users/mobile/login",
+        "foodinja://auth"
+      );
+    } catch (error) {
+      console.error("خطا در باز کردن مرورگر:", error);
+      Alert.alert(
+        "خطا",
+        "نمی‌توان مرورگر را باز کرد. لطفا دوباره تلاش کنید."
+      );
+    }
   };
 
-  // بستن WebView
   const handleCloseWebView = () => {
     setShowWebView(false);
     setWebViewLoading(true);
   };
 
-  // مدیریت درخواست‌های WebView - intercept کردن redirect
-  const handleShouldStartLoadWithRequest = async (request: { url: string }) => {
+  const handleShouldStartLoadWithRequest = (request: { url: string }) => {
     const { url } = request;
 
-    // بررسی اگر URL مربوط به OAuth redirect است
     if (url.startsWith("foodinja://auth")) {
       console.log("دریافت redirect OAuth:", url);
 
-      // استفاده از hook برای پردازش redirect
-      const handled = await handleWebViewRedirect(url);
+      handleWebViewRedirect(url).catch((error) => {
+        console.error("خطا در پردازش redirect:", error);
+      });
 
-      if (handled) {
-        // URL پردازش شد، WebView را متوقف کن
-        return false;
-      }
-
-      // اگر پردازش نشد، WebView را متوقف کن (نباید اتفاق بیفتد)
       return false;
     }
 
-    // اجازه بارگذاری سایر URLها
     return true;
   };
 
-  // مدیریت خطاهای WebView
   const handleWebViewError = (syntheticEvent: any) => {
     const { nativeEvent } = syntheticEvent;
     console.error("خطای WebView:", nativeEvent);
 
-    // فقط اگر خطای navigation نباشد (که برای deep link طبیعی است)
     if (!nativeEvent.url?.startsWith("foodinja://")) {
       Alert.alert(
         "خطا",
@@ -455,7 +457,6 @@ const Login = () => {
         </ScrollView>
       </KeyboardAvoidingView>
 
-      {/* WebView Modal برای OAuth */}
       <Modal
         visible={showWebView}
         animationType="slide"
@@ -463,7 +464,6 @@ const Login = () => {
         onRequestClose={handleCloseWebView}
       >
         <View style={{ flex: 1, backgroundColor: colors.background }}>
-          {/* Header با دکمه بستن */}
           <View
             style={{
               flexDirection: "row",
@@ -474,6 +474,10 @@ const Login = () => {
               borderBottomColor: borderColor,
             }}
           >
+           
+            <Pressable onPress={handleCloseWebView}>
+              <Ionicons name="close" size={24} color={colors.neutral[50]} />
+            </Pressable>
             <Text
               style={{
                 fontSize: 18,
@@ -484,15 +488,11 @@ const Login = () => {
             >
               ورود با گوگل
             </Text>
-            <Pressable onPress={handleCloseWebView}>
-              <Ionicons name="close" size={24} color={colors.neutral[50]} />
-            </Pressable>
           </View>
 
-          {/* WebView */}
           <WebView
             ref={webViewRef}
-            source={{ uri: "https://foodinja.ir/api/users/login" }}
+            source={{ uri: "https://foodinja.ir/api/users/mobile/login" }}
             onShouldStartLoadWithRequest={handleShouldStartLoadWithRequest}
             onLoadStart={() => setWebViewLoading(true)}
             onLoadEnd={() => setWebViewLoading(false)}
@@ -501,48 +501,13 @@ const Login = () => {
             javaScriptEnabled={true}
             domStorageEnabled={true}
             allowsBackForwardNavigationGestures={false}
+            userAgent={getUserAgent()}
+            sharedCookiesEnabled={true}
+            thirdPartyCookiesEnabled={true}
             style={{ flex: 1 }}
           />
 
-          {/* Loading overlay */}
-          {(webViewLoading || authLoading) && (
-            <View
-              style={{
-                position: "absolute",
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                backgroundColor: "rgba(0, 0, 0, 0.3)",
-                justifyContent: "center",
-                alignItems: "center",
-              }}
-            >
-              <View
-                style={{
-                  backgroundColor: colors.background,
-                  padding: 20,
-                  borderRadius: 10,
-                  alignItems: "center",
-                }}
-              >
-                <ActivityIndicator
-                  size="large"
-                  color={colors.primary[500]}
-                />
-                <Text
-                  style={{
-                    marginTop: 10,
-                    color: colors.neutral[50],
-                    fontSize: 14,
-                    fontFamily: "VazirMedium",
-                  }}
-                >
-                  {authLoading ? "در حال احراز هویت..." : "در حال بارگذاری..."}
-                </Text>
-              </View>
-            </View>
-          )}
+          
         </View>
       </Modal>
     </SafeAreaView>

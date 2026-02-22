@@ -80,14 +80,7 @@ function RootLayoutContent() {
     VazirMedium: require("../assets/font/Vazir-Medium.ttf"),
   });
 
-  const { loading: authLoading, error: authError } = useAuthDeepLink(
-    () => {
-      console.log('Authentication successful via deep link');
-    },
-    (error) => {
-      console.error('Authentication failed via deep link:', error);
-    }
-  );
+  useAuthDeepLink();
 
   if (!fontsLoaded) {
     return (
