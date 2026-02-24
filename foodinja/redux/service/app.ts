@@ -88,7 +88,16 @@ export const App = rtkInstance.injectEndpoints({
         body,
       }),
     }),
-    // ============ Personalization APIs ============
+    adminLogin: builder.mutation<
+      { access_token: string; refresh_token: string },
+      { email: string; password: string }
+    >({
+      query: (body) => ({
+        url: "users/mobile/adminlogin",
+        method: "POST",
+        body,
+      }),
+    }),
     getPersonalization: builder.query<PersonalizationSettings, void>({
       query: () => ({
         url: "users/personalization",
@@ -168,6 +177,7 @@ export const {
   useGetDeletedConversationsQuery,
   useGetTokenStatusQuery,
   useExchangeCodeMutation,
+  useAdminLoginMutation,
   // Personalization
   useGetPersonalizationQuery,
   useUpdatePersonalizationMutation,

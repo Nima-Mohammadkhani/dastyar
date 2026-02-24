@@ -22,12 +22,18 @@ import { WebView } from "react-native-webview";
 import { useAuthDeepLink } from "@/hooks/useAuthDeepLink";
 import { useRouter } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
+import BottomSheet from "@/components/ui/BottomSheet";
+import { useAdminLoginMutation, useGetUserInfoQuery } from "@/redux/service/app";
+import { useDispatch } from "react-redux";
+import { setAuthTokens, setUserData } from "@/redux/authSlice";
+import { secureStorage } from "@/utils/secureStorage";
 
 type Step = "email" | "otp";
 
 const Login = () => {
   const { colors, isDark } = useTheme();
   const router = useRouter();
+  const dispatch = useDispatch();
   const [currentStep, setCurrentStep] = useState<Step>("email");
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState(["", "", "", "", ""]);
@@ -35,7 +41,13 @@ const Login = () => {
   const [hasAnimated, setHasAnimated] = useState(false);
   const [showWebView, setShowWebView] = useState(false);
   const [webViewLoading, setWebViewLoading] = useState(true);
+  const [showAdminSheet, setShowAdminSheet] = useState(false);
+  const [adminLoading, setAdminLoading] = useState(false);
   const webViewRef = useRef<WebView>(null);
+  const [adminLogin] = useAdminLoginMutation();
+  const { refetch: refetchUserInfo } = useGetUserInfoQuery(undefined, {
+    skip: true,
+  });
 
   const getUserAgent = () => {
     if (Platform.OS === 'ios') {
@@ -162,6 +174,58 @@ const Login = () => {
     }
   };
 
+  const handleAdminLogin = async () => {
+    try {
+      setAdminLoading(true);
+      const result = await adminLogin({
+        email: "admin@foodinja.ir",
+        password: "admin123456",
+      }).unwrap();
+
+      console.log("Admin Login Response:", JSON.stringify(result, null, 2));
+
+      if (!result.access_token || !result.refresh_token) {
+        throw new Error("Invalid token response: missing tokens");
+      }
+
+      await Promise.all([
+        secureStorage.setToken(result.access_token),
+        secureStorage.setRefreshToken(result.refresh_token),
+      ]);
+
+      dispatch(
+        setAuthTokens({
+          access_token: result.access_token,
+          refresh_token: result.refresh_token,
+        })
+      );
+
+      try {
+        const userInfoResult = await refetchUserInfo();
+        if (userInfoResult.data) {
+          dispatch(setUserData(userInfoResult.data));
+          await secureStorage.setUserData(JSON.stringify(userInfoResult.data));
+        }
+      } catch (userInfoError) {
+      }
+
+      setShowAdminSheet(false);
+      router.dismissAll();
+      setTimeout(() => {
+        router.replace("/(drawer)");
+      }, 100);
+    } catch (error) {
+      console.error("Admin Login Error:", error);
+      console.error("Admin Login Error Details:", JSON.stringify(error, null, 2));
+      Alert.alert(
+        "خطا",
+        "ورود ادمین ناموفق بود. لطفا دوباره تلاش کنید."
+      );
+    } finally {
+      setAdminLoading(false);
+    }
+  };
+
   return (
     <SafeAreaView
       className="flex-1"
@@ -245,6 +309,18 @@ const Login = () => {
                   onPress={handleEmailSubmit}
                   disabled={!email.includes("@")}
                 />
+
+                <Pressable
+                  onPress={() => setShowAdminSheet(true)}
+                  className="mt-4"
+                >
+                  <Text
+                    className="font-vazir text-sm text-center"
+                    style={{ color: colors.neutral[400] }}
+                  >
+                    ورود ادمین
+                  </Text>
+                </Pressable>
 
                 <View className="flex-row items-center my-4">
                   <View
@@ -510,6 +586,55 @@ const Login = () => {
           
         </View>
       </Modal>
+
+      <BottomSheet visible={showAdminSheet} onClose={() => setShowAdminSheet(false)}>
+        <MotiView
+          from={{ opacity: 0, translateY: 20 }}
+          animate={{ opacity: 1, translateY: 0 }}
+          exit={{ opacity: 0, translateY: 20 }}
+          transition={{ type: "timing", duration: 400 }}
+          className="p-6"
+        >
+          <View className="flex-row justify-between items-center mb-4">
+            <View style={{ width: 24 }} />
+            <Pressable onPress={() => setShowAdminSheet(false)}>
+              <Ionicons name="close" size={24} color={colors.neutral[400]} />
+            </Pressable>
+          </View>
+
+          <View className="items-center gap-2 mb-6">
+            <Text
+              className="font-vazir text-xl"
+              style={{ color: colors.neutral[50] }}
+            >
+              ورود ادمین
+            </Text>
+            <Text
+              className="font-vazir text-sm text-center"
+              style={{ color: colors.neutral[400] }}
+            >
+              با کلیک روی دکمه زیر وارد حساب ادمین شوید
+            </Text>
+          </View>
+
+          <Button
+            title={adminLoading ? "در حال ورود..." : "ورود ادمین"}
+            style={{
+              backgroundColor: colors.primary[900],
+              borderRadius: 8,
+              marginTop: 8,
+            }}
+            textStyle={{
+              color: "white",
+              fontSize: 16,
+              fontFamily: "VazirMedium",
+            }}
+            className="py-3"
+            onPress={handleAdminLogin}
+            disabled={adminLoading}
+          />
+        </MotiView>
+      </BottomSheet>
     </SafeAreaView>
   );
 };
