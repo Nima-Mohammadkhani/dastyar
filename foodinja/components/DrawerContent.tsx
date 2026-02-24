@@ -10,7 +10,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { useSelector } from "react-redux";
 import type { RootState } from "@/redux/store";
-import { useGetConversationsQuery } from "@/redux/service/app";
+import { useGetConversationsQuery, useGetUserInfoQuery } from "@/redux/service/app";
 
 const CustomDrawerContent = () => {
   const [search, setSearch] = useState<string>("");
@@ -24,6 +24,18 @@ const CustomDrawerContent = () => {
   const { data: conversationsData, isLoading, refetch } = useGetConversationsQuery(undefined, {
     skip: !isAuthenticated,
   });
+
+  const { data: userInfo } = useGetUserInfoQuery(undefined, {
+    skip: !isAuthenticated,
+  });
+
+  const userName = userInfo?.name || "کاربر";
+  const userInitials = userName
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2) || "U";
 
   useEffect(() => {
     if (isDrawerOpen) {
@@ -77,12 +89,14 @@ const CustomDrawerContent = () => {
               style={{ backgroundColor: colors.primary[900] }}
               iconRight="add"
               iconCenter
-              onPress={() => router.push("/(drawer)")}
+              onPress={() => router.replace("/(drawer)")}
             />
           </View>
 
           <Pressable
-            onPress={() => router.push("/(drawer)")}
+            onPress={() => {
+              router.replace("/(drawer)");
+            }}
             className="flex flex-row items-center gap-2"
           >
             <Button
@@ -151,7 +165,7 @@ const CustomDrawerContent = () => {
         >
           <View className="flex justify-center items-center rounded-full bg-purple-500 p-2 w-12 h-12">
             <Text className="font-vazir" style={{ color: colors.neutral[50] }}>
-              Ni
+              {userInitials}
             </Text>
           </View>
           <View className="flex flex-row items-center gap-2">
@@ -159,7 +173,7 @@ const CustomDrawerContent = () => {
               className="font-bold font-vazir"
               style={{ color: colors.neutral[50] }}
             >
-              Nima
+              {userName}
             </Text>
             <Ionicons name="chevron-down" color={colors.neutral[50]} />
           </View>

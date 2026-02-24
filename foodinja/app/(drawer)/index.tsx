@@ -18,9 +18,10 @@ import { MotiView } from "moti";
 import DrawerButton from "@/components/ui/DrawerButton";
 import BottomSheet from "@/components/ui/BottomSheet";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { useRouter, useFocusEffect } from "expo-router";
 import { useSelector } from "react-redux";
 import type { RootState } from "@/redux/store";
+import { useCallback } from "react";
 import {
   useSendChatMessageMutation,
 } from "@/redux/service/app";
@@ -49,6 +50,7 @@ const Index = () => {
   const router = useRouter();
   const cardBg = isDark ? "#1C1C1E" : "#F5F5F5";
   const borderColor = isDark ? colors.neutral[800] : colors.neutral[200];
+  const resetKeyRef = useRef(0);
   
   const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
   const [sendChatMessage, { isLoading: isSending }] = useSendChatMessageMutation();
@@ -80,6 +82,20 @@ const Index = () => {
       }, 100);
     }
   }, [messages, currentTypingText]);
+
+  useFocusEffect(
+    useCallback(() => {
+      const currentKey = resetKeyRef.current;
+      resetKeyRef.current += 1;
+      
+      if (currentKey > 0 && (messages.length > 0 || conversationId !== null)) {
+        setMessages([]);
+        setConversationId(null);
+        setPrompt("");
+        setCurrentTypingText("");
+      }
+    }, [])
+  );
 
   const typeMessage = (text: string, messageId: string) => {
     let index = 0;
