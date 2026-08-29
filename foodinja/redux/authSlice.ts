@@ -62,28 +62,9 @@ const authSlice = createSlice({
   },
 });
 
-export async function refreshToken(refreshToken: string | null) {
-  if (!refreshToken) return null;
-  
-  try {
-    const response = await fetch('https://foodinja.ir/api/auth/refresh', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
-      body: JSON.stringify({ refresh_token: refreshToken }),
-    });
-    
-    if (!response.ok) {
-      return null;
-    }
-    
-    const data = await response.json();
-    return { token: data.access_token };
-  } catch (error) {
-    return null;
-  }
+export async function refreshToken(_refreshToken: string | null) {
+  if (!_refreshToken) return null;
+  return { token: "mock_access_token_local" };
 }
 
 export const { setToken, setRefreshToken, setUserData, setAuthTokens, logout, rehydrateAuth } = authSlice.actions;

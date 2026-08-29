@@ -226,21 +226,23 @@ const Index = () => {
                 transition={{ type: "timing", duration: 700 }}
                 className={`flex-1 flex flex-col justify-center items-center gap-2 ${keyboardHeight !== 0 ? "mb-80" : "mb-0"}`}
               >
-                <Image
-                  source={require("@/assets/images/logo/logo.png")}
-                  className="size-24"
-                />
+                <View
+                  className="w-24 h-24 rounded-full items-center justify-center"
+                  style={{ backgroundColor: colors.primary[900] + "CC" }}
+                >
+                  <Text className="text-white text-4xl font-vazir">AI</Text>
+                </View>
                 <Text
                   className="font-vazir text-lg"
                   style={{ color: colors.neutral[50] }}
                 >
-                  من فودینجا هستم
+                  دستیار هوشمند
                 </Text>
                 <Text
                   className="font-vazir"
                   style={{ color: colors.neutral[50] }}
                 >
-                  بذار کمکت کنم تا یه غذای لذیذ بپزی...
+                  هر سوالی داری بپرس، اینجام تا کمک کنم
                 </Text>
               </MotiView>
             </Pressable>
@@ -268,15 +270,17 @@ const Index = () => {
                   >
                     {!message.isUser && (
                       <View className="flex flex-row items-center mb-2 gap-2">
-                        <Image
-                          source={require("@/assets/images/logo/logo.png")}
-                          className="size-8"
-                        />
+                        <View
+                          className="w-8 h-8 rounded-full items-center justify-center"
+                          style={{ backgroundColor: colors.primary[900] }}
+                        >
+                          <Text className="text-white text-xs font-vazir">AI</Text>
+                        </View>
                         <Text
                           className="font-vazir text-sm"
                           style={{ color: colors.neutral[50] }}
                         >
-                          فودینجا
+                          دستیار
                         </Text>
                       </View>
                     )}
@@ -367,21 +371,23 @@ const Index = () => {
             </View>
 
             <View className="items-center gap-2 mb-6">
-              <Image
-                source={require("@/assets/images/logo/logo.png")}
-                className="w-20 h-20"
-              />
+              <View
+                className="w-20 h-20 rounded-full items-center justify-center"
+                style={{ backgroundColor: colors.primary[900] }}
+              >
+                <Text className="text-white text-3xl font-vazir">AI</Text>
+              </View>
               <Text
                 className="font-vazir text-xl"
                 style={{ color: colors.neutral[50] }}
               >
-                به فودینجا خوش آمدید
+                به دستیار هوشمند خوش آمدید
               </Text>
               <Text
                 className="font-vazir text-lg text-center"
                 style={{ color: colors.neutral[50] }}
               >
-                وارد شوید یا یک حساب کاربری ایجاد کنید
+                برای ذخیره مکالمات وارد شوید
               </Text>
             </View>
 
@@ -494,7 +500,7 @@ const Index = () => {
               className="font-vazir text-xs text-center mt-6"
               style={{ color: colors.neutral[400] }}
             >
-              با ادامه، شرایط و قوانین فودینجا را می‌پذیرید
+              با ادامه، شرایط و قوانین دستیار هوشمند را می‌پذیرید
             </Text>
           </MotiView>
         </BottomSheet>
@@ -510,10 +516,12 @@ const Index = () => {
           
 
             <View className="items-center gap-4 mb-6">
-            <Image
-                source={require("@/assets/images/logo/logo.png")}
-                className="w-20 h-20"
-              />
+              <View
+                className="w-20 h-20 rounded-full items-center justify-center"
+                style={{ backgroundColor: colors.primary[900] + "20" }}
+              >
+                <Ionicons name="hardware-chip-outline" size={40} color={colors.primary[500]} />
+              </View>
               <Text
                 className="font-vazir text-xl text-center"
                 style={{ color: colors.neutral[50] }}
@@ -530,7 +538,7 @@ const Index = () => {
                 className="font-vazir text-sm text-center px-4 mt-2"
                 style={{ color: colors.neutral[400], lineHeight: 22 }}
               >
-                برای ادامه استفاده از فودینجا، لطفاً ثبت نام کنید یا وارد اپ شوید
+                برای ادامه استفاده از دستیار هوشمند، لطفاً وارد شوید
               </Text>
             </View>
 

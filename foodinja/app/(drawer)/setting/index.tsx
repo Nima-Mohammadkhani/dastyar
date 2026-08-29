@@ -18,17 +18,18 @@ import { useRouter } from "expo-router";
 import { useSelector, useDispatch } from "react-redux";
 import type { RootState } from "@/redux/store";
 import { logout } from "@/redux/authSlice";
-import {
-  useGetUserInfoQuery,
-} from "@/redux/service/app";
+import { secureStorage } from "@/utils/secureStorage";
+import { useGetUserInfoQuery } from "@/redux/service/app";
 
 const Index = () => {
   const { colors, isDark } = useTheme();
   const scheme = useColorScheme();
   const dispatch = useDispatch();
   const router = useRouter();
-  const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
-  
+  const isAuthenticated = useSelector(
+    (state: RootState) => state.auth.isAuthenticated,
+  );
+
   const [editSheet, setEditSheet] = useState<boolean>(false);
   const [themeSheet, setThemeSheet] = useState<boolean>(false);
   const [languageSheet, setLanguageSheet] = useState<boolean>(false);
@@ -36,19 +37,23 @@ const Index = () => {
   const [selectedLanguage, setSelectedLanguage] = useState<string>("fa");
   const [editName, setEditName] = useState<string>("");
   const [editUserName, setEditUserName] = useState<string>("");
-  
-  const { data: userInfo, isLoading: isLoadingUser } = useGetUserInfoQuery(undefined, {
-    skip: !isAuthenticated,
-  });
+
+  const { data: userInfo, isLoading: isLoadingUser } = useGetUserInfoQuery(
+    undefined,
+    {
+      skip: !isAuthenticated,
+    },
+  );
 
   const name = userInfo?.name || "";
   const userName = userInfo?.email || "";
-  const userInitials = name
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2) || "U";
+  const userInitials =
+    name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2) || "U";
 
   const changeTheme = (theme: string) => {
     setSelectedTheme(theme);
@@ -58,7 +63,8 @@ const Index = () => {
     setSelectedLanguage(lang);
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await secureStorage.clearAll();
     dispatch(logout());
     router.replace("/auth/login");
   };
@@ -309,7 +315,7 @@ const Index = () => {
               className="font-vazir text-sm"
               style={{ color: colors.neutral[500], textAlign: "right" }}
             >
-              فود اینجا من
+              دستیار من
             </Text>
 
             <View

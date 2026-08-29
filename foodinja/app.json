@@ -1,46 +1,36 @@
 {
   "expo": {
-    "name": "foodinja",
-    "slug": "foodinja",
+    "name": "Dastyar",
+    "slug": "dastyar",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/logo/appIcon.png",
-    "scheme": "foodinja",
+    "icon": "./assets/images/icon.png",
+    "scheme": "dastyar",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "updates": {
-      "enabled": true,
-      "checkAutomatically": "ON_LOAD",
-      "fallbackToCacheTimeout": 0,
-      "url": "https://u.expo.dev/cc508a91-a83d-4f74-88d6-161f8ee2cdc5"
+      "enabled": false
     },
     "runtimeVersion": "1.0.0",
     "ios": {
       "supportsTablet": true,
-      "icon": "./assets/images/logo/appIcon.png",
-      "bundleIdentifier": "com.nimamohammadkhani.foodinja",
+      "icon": "./assets/images/icon.png",
+      "bundleIdentifier": "com.dastyar.app",
       "associatedDomains": []
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/logo/appIcon.png",
-        "backgroundColor": "#E6F4FE"
+        "foregroundImage": "./assets/images/android-icon-foreground.png",
+        "backgroundImage": "./assets/images/android-icon-background.png",
+        "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.nimamohammadkhani.foodinja",
-      "intentFilters": [
-        {
-          "action": "VIEW",
-          "autoVerify": true,
-          "data": [{ "scheme": "foodinja", "host": "*" }],
-          "category": ["BROWSABLE", "DEFAULT"]
-        }
-      ]
+      "package": "com.dastyar.app"
     },
     "web": {
       "output": "static",
-      "favicon": "./assets/images/logo/appIcon.png",
+      "favicon": "./assets/images/favicon.png",
       "bundler": "metro"
     },
     "plugins": [
@@ -48,7 +38,7 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/logo/appIcon.png",
+          "image": "./assets/images/splash-icon.png",
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff",
@@ -61,10 +51,7 @@
       "reactCompiler": true
     },
     "extra": {
-      "router": {},
-      "eas": {
-        "projectId": "cc508a91-a83d-4f74-88d6-161f8ee2cdc5"
-      }
+      "router": {}
     }
   }
 }

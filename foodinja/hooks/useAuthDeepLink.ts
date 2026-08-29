@@ -37,11 +37,11 @@ export function useAuthDeepLink(
     try {
       const parsed = Linking.parse(url);
       
-      if (parsed.scheme !== 'foodinja') {
+      if (parsed.scheme !== 'dastyar') {
         return { code: null, error: null };
       }
       
-      if (parsed.path !== 'auth') {
+      if (parsed.path !== 'auth' && parsed.path !== '/auth') {
         return { code: null, error: null };
       }
       
@@ -204,7 +204,7 @@ export function useAuthDeepLink(
 
   const handleWebViewRedirect = useCallback(
     async (url: string): Promise<boolean> => {
-      if (!url.startsWith('foodinja://auth')) {
+      if (!url.startsWith('dastyar://auth')) {
         return false; 
       }
 

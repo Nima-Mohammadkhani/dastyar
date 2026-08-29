@@ -9,7 +9,6 @@ import {
   Keyboard,
   Pressable,
   ImageBackground,
-  Image,
   Alert,
   ActivityIndicator,
 } from "react-native";
@@ -202,21 +201,23 @@ const ChatId = () => {
                 transition={{ type: "timing", duration: 700 }}
                 className={`flex-1 flex flex-col justify-center items-center gap-2 ${keyboardHeight !== 0 ? "mb-80" : "mb-0"}`}
               >
-                <Image
-                  source={require("@/assets/images/logo/logo.png")}
-                  className="size-24"
-                />
+                <View
+                  className="w-24 h-24 rounded-full items-center justify-center"
+                  style={{ backgroundColor: colors.primary[900] + "CC" }}
+                >
+                  <Text className="text-white text-4xl font-vazir">AI</Text>
+                </View>
                 <Text
                   className="font-vazir text-lg"
                   style={{ color: colors.neutral[50] }}
                 >
-                  من فودینجا هستم
+                  دستیار هوشمند
                 </Text>
                 <Text
                   className="font-vazir"
                   style={{ color: colors.neutral[50] }}
                 >
-                  بذار کمکت کنم تا یه غذای لذیذ بپزی...
+                  هر سوالی داری بپرس، اینجام تا کمک کنم
                 </Text>
               </MotiView>
             </Pressable>
@@ -244,15 +245,17 @@ const ChatId = () => {
                   >
                     {!message.isUser && (
                       <View className="flex flex-row items-center mb-2 gap-2">
-                        <Image
-                          source={require("@/assets/images/logo/logo.png")}
-                          className="size-8"
-                        />
+                        <View
+                          className="w-8 h-8 rounded-full items-center justify-center"
+                          style={{ backgroundColor: colors.primary[900] }}
+                        >
+                          <Text className="text-white text-xs font-vazir">AI</Text>
+                        </View>
                         <Text
                           className="font-vazir text-sm"
                           style={{ color: colors.neutral[50] }}
                         >
-                          فودینجا
+                          دستیار
                         </Text>
                       </View>
                     )}

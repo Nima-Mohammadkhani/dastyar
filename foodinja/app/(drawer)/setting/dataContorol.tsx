@@ -1,14 +1,21 @@
 import { SafeAreaView } from "react-native-safe-area-context";
-import { View, Text, ScrollView, Pressable, Switch } from "react-native";
+import { View, Text, ScrollView, Pressable, Switch, Alert } from "react-native";
 import { useState, useRef, useEffect } from "react";
 import { MotiView } from "moti";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "@/constants/theme";
 import BottomSheet from "@/components/ui/BottomSheet";
 import Button from "@/components/ui/Button";
+import { mockDB } from "@/utils/mockDatabase";
+import { useDispatch } from "react-redux";
+import { logout } from "@/redux/authSlice";
+import { secureStorage } from "@/utils/secureStorage";
+import { useRouter } from "expo-router";
 
 const DataControl = () => {
   const { colors, isDark } = useTheme();
+  const dispatch = useDispatch();
+  const router = useRouter();
   const [modelImprovement, setModelImprovement] = useState(false);
 
   const [hasAnimated, setHasAnimated] = useState(false);
@@ -219,8 +226,12 @@ const DataControl = () => {
                 fontFamily: "VazirMedium",
               }}
               className="py-3"
-              onPress={() => {
+              onPress={async () => {
+                await mockDB.clearAll();
+                await secureStorage.clearAll();
+                dispatch(logout());
                 setDeleteAccountSheet(false);
+                router.replace("/auth/login");
               }}
             />
             <Button
@@ -305,8 +316,10 @@ const DataControl = () => {
                 fontFamily: "VazirMedium",
               }}
               className="py-3"
-              onPress={() => {
+              onPress={async () => {
+                await mockDB.clearConversations();
                 setClearHistorySheet(false);
+                Alert.alert("انجام شد", "تاریخچه چت‌ها پاک شد");
               }}
             />
             <Button
@@ -497,7 +510,7 @@ const DataControl = () => {
                   className="font-vazir text-base"
                   style={{ color: colors.error.DEFAULT }}
                 >
-                  پاک کردن اکانت فوداینجا
+                  حذف حساب کاربری
                 </Text>
                 <Ionicons
                   name="chevron-back"

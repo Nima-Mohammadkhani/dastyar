@@ -124,7 +124,7 @@ const CustomDrawerContent = () => {
                 className="font-vazir text-sm text-center"
                 style={{ color: colors.neutral[400] }}
               >
-                {isAuthenticated ? "هیچ مکالمه‌ای یافت نشد" : "برای مشاهده مکالمات حساب خود شوید"}
+                {isAuthenticated ? "هیچ مکالمه‌ای یافت نشد" : "برای مشاهده مکالمات وارد شوید"}
               </Text>
             </View>
           ) : (

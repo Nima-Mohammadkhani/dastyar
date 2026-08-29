@@ -136,7 +136,7 @@ const Upgrade = () => {
             className="font-vazir text-3xl"
             style={{ color: colors.neutral[50] }}
           >
-            فود اینجا{" "}
+            دستیار{" "}
             <Text style={{ color: colors.primary[900] }}>
               {activeTab === "plus" ? "پلاس" : "حرفه‌ای"}
             </Text>
